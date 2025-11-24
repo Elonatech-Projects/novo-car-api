@@ -2,9 +2,13 @@ import { Module } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { MongooseModule } from '@nestjs/mongoose';
 import { AuthModule } from './auth/auth.module';
+import { BookingModule } from './booking/booking.module';
+// import { Booking } from './booking/schema/booking.schema';
 
 @Module({
   imports: [
+    AuthModule,
+    BookingModule,
     ConfigModule.forRoot({
       isGlobal: true,
       envFilePath: '.env',
@@ -32,6 +36,8 @@ import { AuthModule } from './auth/auth.module';
     }),
 
     AuthModule,
+
+    BookingModule,
   ],
 })
 export class AppModule {}

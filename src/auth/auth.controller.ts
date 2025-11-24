@@ -15,6 +15,6 @@ export class AuthController {
   async signUsersIn(@Body() body: { email: string; password: string }) {
     console.log('SIGN IN HIT:', body);
     const { email, password } = body;
-    return this.authService.LoginUser(email, password);
+    return this.authService.loginUser(email, password);
   }
 }
