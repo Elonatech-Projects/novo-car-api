@@ -33,5 +33,5 @@ export class CreateAuthDto {
   })
   confirmPassword: string;
 
-  id: string;
+  // id: string;
 }

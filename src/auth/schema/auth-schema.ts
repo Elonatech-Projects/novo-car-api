@@ -9,19 +9,16 @@ export class Auth extends Document {
   @Prop({
     required: true,
     unique: true,
-    // match: /^[^\s@]+@[^\s@]+\.[^\s@]+$/,
   })
   email: string;
 
   @Prop({
     required: true,
-    // match: /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[\W_]).{6,}$/,
   })
   password: string;
 
   @Prop({
     required: true,
-    // match: /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[\W_]).{6,}$/,
   })
   confirmPassword: string;
 

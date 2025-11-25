@@ -1,29 +1,27 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
-import { Document, Types } from 'mongoose';  
+import { Document, Types } from 'mongoose';
+// import { Auth } from 'src/auth/schema/auth-schema';
 import { Auth } from '../../auth/schema/auth-schema';
 
 @Schema({ timestamps: true })
-export class Booking extends Document {
+export class Shuttle extends Document {
   @Prop({ type: Types.ObjectId, ref: Auth.name, required: true })
-  userId: Types.ObjectId;
+  user: Types.ObjectId;
 
   @Prop({ required: true })
-  pickupLocation: string;
+  name: string;
 
   @Prop({ required: true })
-  dropoffLocation: string;
+  phone: string;
 
   @Prop({ required: true })
-  pickupDate: string;
+  pickup: string;
 
   @Prop({ required: true })
-  pickupTime: string;
+  destination: string;
 
   @Prop({ required: true })
-  shuttleType: string;
-
-  @Prop({ required: true })
-  passengers: number;
+  date: string;
 }
 
-export const BookingSchema = SchemaFactory.createForClass(Booking);
+export const ShuttleServices = SchemaFactory.createForClass(Shuttle);
