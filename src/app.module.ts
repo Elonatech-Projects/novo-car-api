@@ -25,7 +25,7 @@ import { FleetManagementModule } from './fleet-management/fleet-management.modul
 
         if (url) {
           console.log('✅ Connecting to MongoDB...');
-          console.log(`🔗 Connection string: ${url}`);
+          // console.log(`🔗 Connection string: ${url}`);
         } else {
           console.error(
             ' Failed to connect MONGO_URL is not defined in your file',
