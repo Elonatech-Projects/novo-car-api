@@ -1,11 +1,4 @@
-
-import {
-  Controller,
-  Post,
-  Body,
-  Req,
-  UseGuards,
-} from '@nestjs/common';
+import { Controller, Post, Body, Req, UseGuards } from '@nestjs/common';
 import { ShuttleServicesService } from './shuttle-services.service';
 import { CreateShuttleServicesDto } from './dto/create-shuttle-services.dto';
 import { AuthGuard } from '@nestjs/passport';

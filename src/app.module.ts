@@ -5,11 +5,14 @@ import { AuthModule } from './auth/auth.module';
 import { BookingModule } from './booking/booking.module';
 // import { Booking } from './booking/schema/booking.schema';
 import { ShuttleServicesModule } from './shuttle-services/shuttle-services.module';
+// import { FleetManagementController } from './fleet-management/fleet-management.controller';
+import { FleetManagementModule } from './fleet-management/fleet-management.module';
 
 @Module({
   imports: [
     AuthModule,
     BookingModule,
+    FleetManagementModule,
     ConfigModule.forRoot({
       isGlobal: true,
       envFilePath: '.env',
@@ -36,11 +39,8 @@ import { ShuttleServicesModule } from './shuttle-services/shuttle-services.modul
       inject: [ConfigService],
     }),
 
-    AuthModule,
-
-    BookingModule,
-
     ShuttleServicesModule,
   ],
+  controllers: [], // ✅ REMOVE FleetManagementController here
 })
 export class AppModule {}

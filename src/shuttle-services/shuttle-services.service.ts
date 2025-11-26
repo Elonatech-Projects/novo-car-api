@@ -1,4 +1,3 @@
-
 import { BadRequestException, Injectable } from '@nestjs/common';
 import { Shuttle } from './schema/shuttle-service-schema';
 import { Model } from 'mongoose';
@@ -14,34 +13,34 @@ export class ShuttleServicesService {
   ) {}
 
   async createShuttle(dto: CreateShuttleServicesDto, user: string) {
-  const { name, phone, pickup, destination, date } = dto;
+    const { name, phone, pickup, destination, date } = dto;
 
-  if (!name || !phone || !pickup || !destination || !date) {
-    throw new BadRequestException('All fields are to be filled');
+    if (!name || !phone || !pickup || !destination || !date) {
+      throw new BadRequestException('All fields are to be filled');
+    }
+
+    const id = await this.userModel.findById(user);
+
+    if (!id) {
+      throw new BadRequestException('No user found');
+    }
+
+    // MUST match the schema directly
+    const data = {
+      name,
+      phone,
+      pickup,
+      destination,
+      date,
+      user: id._id,
+    };
+
+    const userShuttle = await this.shuttleModel.create(data);
+
+    return {
+      message: 'User booking shuttle created',
+      success: true,
+      userShuttle,
+    };
   }
-
-  const id = await this.userModel.findById(user);
-
-  if (!id) {
-    throw new BadRequestException('No user found');
-  }
-
-  const data = {
-    name,
-    phone,
-    pickup,
-    destination,
-    date,
-    user: id._id,
-  };
-
-  const userShuttle = await this.shuttleModel.create(data);
-
-  return {
-    message: 'User booking shuttle created',
-    success: true,
-    userShuttle,
-  };
-}
-
 }
