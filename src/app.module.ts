@@ -41,6 +41,5 @@ import { FleetManagementModule } from './fleet-management/fleet-management.modul
 
     ShuttleServicesModule,
   ],
-  controllers: [], // ✅ REMOVE FleetManagementController here
 })
 export class AppModule {}
