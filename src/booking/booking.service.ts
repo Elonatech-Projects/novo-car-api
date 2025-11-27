@@ -12,10 +12,8 @@ export class BookingService {
     @InjectModel(Auth.name) private userModel: Model<Auth>,
   ) { }
 
-   async createBooking(userId: string, dto: CreateBookingDto) {
-    const { pickupDate, pickupLocation, pickupTime, shuttleType, passengers } = dto;
-
-    // Validate required fields
+  async createBooking(userId: string, dto: CreateBookingDto) {
+    // Validate fields
     for (const [key, value] of Object.entries(dto)) {
       if (!value) {
         throw new BadRequestException(`${key} is required`);
@@ -24,23 +22,19 @@ export class BookingService {
 
     const user = await this.userModel.findById(userId);
     if (!user) {
-      throw new BadRequestException(`User not found`);
+      throw new BadRequestException('User not found');
     }
 
     const userBooking = {
-      pickupDate,
-      pickupLocation,
-      pickupTime,
-      shuttleType,
-      passengers,
-      userId: user._id, 
+      ...dto,
+      userId: user._id
     };
 
     const userData = await this.bookingModel.create(userBooking);
 
     return {
       message: 'User booking created',
-      userData,
+      userData
     };
   }
 
