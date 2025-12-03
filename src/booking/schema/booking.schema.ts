@@ -1,5 +1,5 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
-import { Document, Types } from 'mongoose';  
+import { Document, Types } from 'mongoose';
 import { Auth } from '../../auth/schema/auth-schema';
 
 @Schema({ timestamps: true })

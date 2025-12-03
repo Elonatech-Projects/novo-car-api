@@ -7,12 +7,16 @@ import { BookingModule } from './booking/booking.module';
 import { ShuttleServicesModule } from './shuttle-services/shuttle-services.module';
 // import { FleetManagementController } from './fleet-management/fleet-management.controller';
 import { FleetManagementModule } from './fleet-management/fleet-management.module';
+import { CareerJobsController } from './career-jobs/career-jobs.controller';
+import { CareerJobsService } from './career-jobs/career-jobs.service';
+import { CareerJobsModule } from './career-jobs/career-jobs.module';
 
 @Module({
   imports: [
     AuthModule,
     BookingModule,
     FleetManagementModule,
+    CareerJobsModule,
     ConfigModule.forRoot({
       isGlobal: true,
       envFilePath: '.env',
@@ -40,6 +44,10 @@ import { FleetManagementModule } from './fleet-management/fleet-management.modul
     }),
 
     ShuttleServicesModule,
+
+    CareerJobsModule,
   ],
+  // controllers: [CareerJobsController],
+  // providers: [CareerJobsService],
 })
 export class AppModule {}

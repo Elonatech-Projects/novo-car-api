@@ -12,7 +12,8 @@ import { MongooseModule } from '@nestjs/mongoose';
   imports: [
     MongooseModule.forFeature([
       { name: FleetManagement.name, schema: FleetManagementSchema },
-      {name: Auth.name, schema: AuthSchema}]),
+      { name: Auth.name, schema: AuthSchema },
+    ]),
   ],
   controllers: [FleetManagementController],
   providers: [FleetManagementService],
