@@ -10,6 +10,7 @@ import { FleetManagementModule } from './fleet-management/fleet-management.modul
 import { CareerJobsController } from './career-jobs/career-jobs.controller';
 import { CareerJobsService } from './career-jobs/career-jobs.service';
 import { CareerJobsModule } from './career-jobs/career-jobs.module';
+import { AdminModule } from './admin/admin.module';
 
 @Module({
   imports: [
@@ -46,6 +47,8 @@ import { CareerJobsModule } from './career-jobs/career-jobs.module';
     ShuttleServicesModule,
 
     CareerJobsModule,
+
+    AdminModule,
   ],
   // controllers: [CareerJobsController],
   // providers: [CareerJobsService],

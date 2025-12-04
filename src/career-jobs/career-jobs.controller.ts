@@ -1,6 +1,6 @@
 import { Controller, Req } from '@nestjs/common';
-import { Body, Post, UseGuards } from '@nestjs/common';
-import { AuthGuard } from '@nestjs/passport';
+import { Body, Post } from '@nestjs/common';
+// import { AuthGuard } from '@nestjs/passport';
 // import { CreateCareerJobDto } from './dto/create-career-job.dto';
 // import { createCareerJobsDto } from './dto/create-career-job.dto';
 import { CareerJobsService } from './career-jobs.service';

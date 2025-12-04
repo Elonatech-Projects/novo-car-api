@@ -16,7 +16,7 @@ export class AuthService {
   constructor(
     @InjectModel(Auth.name) private authModel: Model<Auth>,
     private jwtService: JwtService,
-) {}
+  ) {}
 
   async createUser(createAuthDto: CreateAuthDto) {
     const { name, email, password, confirmPassword, phoneNumber } = createAuthDto;
