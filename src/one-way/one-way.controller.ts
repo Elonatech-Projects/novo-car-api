@@ -14,7 +14,7 @@ export class OneWayController {
     @Req() req: Request & { user: JwtUser },
     @Body() dto: CreateOneWayDto,
   ) {
-    const userId = req.user._id
+    const userId = req.user._id;
     return this.oneWayService.createOneWay(dto, userId);
   }
 }
