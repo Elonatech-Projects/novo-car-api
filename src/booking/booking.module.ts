@@ -4,6 +4,7 @@ import { BookingController } from './booking.controller';
 import { BookingService } from './booking.service';
 import { Booking, BookingSchema } from './schema/booking.schema';
 import { Auth, AuthSchema } from '../auth/schema/auth-schema';
+import { JwtStrategy } from '../auth/jwt/jwt.strategy';
 
 @Module({
   imports: [
@@ -13,6 +14,6 @@ import { Auth, AuthSchema } from '../auth/schema/auth-schema';
     ]),
   ],
   controllers: [BookingController],
-  providers: [BookingService],
+  providers: [BookingService, JwtStrategy],
 })
 export class BookingModule {}

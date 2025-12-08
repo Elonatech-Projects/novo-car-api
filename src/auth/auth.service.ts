@@ -8,56 +8,59 @@ import { Model } from 'mongoose';
 import { CreateAuthDto } from './dto/create-auth-dto';
 import { Auth } from './schema/auth-schema';
 import { InjectModel } from '@nestjs/mongoose';
-// import { BadRequestException } from '@nestjs/common';
+import { JwtPayload } from './jwt.types';
 import * as bcrypt from 'bcrypt';
+
+export interface LoginResponse {
+  message: string;
+  success: boolean;
+  token: string;
+  user: {
+    _id: string;
+    name: string;
+    email: string;
+    phoneNumber: string;
+  };
+}
 
 @Injectable()
 export class AuthService {
   constructor(
     @InjectModel(Auth.name) private authModel: Model<Auth>,
     private jwtService: JwtService,
-  ) {}
+  ) { }
 
   async createUser(createAuthDto: CreateAuthDto) {
     const { name, email, password, confirmPassword, phoneNumber } = createAuthDto;
 
-    const fields = {
-      name,
-      email,
-      password,
-      confirmPassword,
-      phoneNumber,
-    };
+    // Basic validation
     if (!name || !email || !password || !confirmPassword || !phoneNumber) {
       throw new BadRequestException('All fields are required');
     }
-
     if (password !== confirmPassword) {
       throw new BadRequestException('Passwords do not match');
     }
-    for (const [key, value] of Object.entries(fields)) {
-      if (!value) {
-        throw new BadRequestException(`${key} is required`);
-      }
-    }
+
     const existing = await this.authModel.findOne({ email });
     if (existing) {
       throw new BadRequestException('Email already registered');
     }
+
+    // Hash passwords
     const salt = await bcrypt.genSalt();
     const hashedPassword = await bcrypt.hash(password, salt);
-    const confirmHarshPassword = await bcrypt.hash(confirmPassword, salt);
 
-    const data = {
+    const userData = {
       ...createAuthDto,
       password: hashedPassword,
-      confirmPassword: confirmHarshPassword,
+      confirmPassword: hashedPassword, 
     };
 
-    const user = await this.authModel.create(data);
+    // Save user
+    const user = await this.authModel.create(userData);
 
     return {
-      message: 'Document created',
+      message: 'User created successfully',
       success: true,
       user: {
         _id: user._id,
@@ -68,9 +71,9 @@ export class AuthService {
     };
   }
 
-  async loginUser(email: string, password: string) {
+  async loginUser(email: string, password: string): Promise<LoginResponse> {
     if (!email || !password) {
-      throw new BadRequestException('Email and password needed');
+      throw new BadRequestException('Email and password are required');
     }
 
     const registeredUser = await this.authModel.findOne({ email });
@@ -78,28 +81,27 @@ export class AuthService {
       throw new BadRequestException('Invalid credentials');
     }
 
-    const checkPassword = await bcrypt.compare(password, registeredUser.password);
-    if (!checkPassword) {
+    const isPasswordValid = await bcrypt.compare(password, registeredUser.password);
+    if (!isPasswordValid) {
       throw new BadRequestException('Invalid credentials');
     }
 
-    const payload = {
+    const payload: JwtPayload = {
       sub: String(registeredUser._id),
-      _id: String(registeredUser._id),
       email: registeredUser.email,
     };
+
     const token = this.jwtService.sign(payload);
-    console.log('check-password', checkPassword);
 
     return {
-      message: 'Log in success',
+      message: 'Login successful',
       success: true,
-      token: token,
+      token,
       user: {
+        _id: String(registeredUser._id),
         name: registeredUser.name,
         email: registeredUser.email,
         phoneNumber: registeredUser.phoneNumber,
-        _id: registeredUser._id,
       },
     };
   }

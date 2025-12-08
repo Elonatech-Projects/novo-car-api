@@ -1,15 +1,20 @@
 import { Controller, Post, Body, UseGuards, Req } from '@nestjs/common';
-import { AuthGuard } from '@nestjs/passport';
+import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { BookingService } from './booking.service';
 import { CreateBookingDto } from './dto/create-booking.dto';
+import { JwtUser } from '../auth/jwt.types';
+import { Request } from 'express';
 
 @Controller('booking')
 export class BookingController {
   constructor(private readonly bookingService: BookingService) {}
 
   @Post('create')
-  @UseGuards(AuthGuard('jwt'))
-  async createBooking(@Req() req, @Body() dto: CreateBookingDto) {
+  @UseGuards(JwtAuthGuard)
+  async createBooking(
+    @Req() req: Request & { user: JwtUser },
+    @Body() dto: CreateBookingDto,
+  ) {
     const userId = req.user._id;
     return this.bookingService.createBooking(userId, dto);
   }

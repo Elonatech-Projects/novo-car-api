@@ -9,7 +9,7 @@ import { MongooseModule } from '@nestjs/mongoose';
   imports: [
     MongooseModule.forFeature([
       { name: Shuttle.name, schema: ShuttleServices },
-      {name: Auth.name, schema: AuthSchema}
+      { name: Auth.name, schema: AuthSchema },
     ]),
   ],
   controllers: [ShuttleServicesController],

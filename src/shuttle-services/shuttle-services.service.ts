@@ -12,35 +12,37 @@ export class ShuttleServicesService {
     @InjectModel(Auth.name) private userModel: Model<Auth>,
   ) {}
 
-  async createShuttle(dto: CreateShuttleServicesDto, user: string) {
+  async createShuttle(dto: CreateShuttleServicesDto, userId: string) {
     const { name, phone, pickup, destination, date } = dto;
 
-    if (!name || !phone || !pickup || !destination || !date) {
-      throw new BadRequestException('All fields are to be filled');
+    // Validate required fields
+    for (const [key, value] of Object.entries(dto)) {
+      if (!value) {
+        throw new BadRequestException(`${key} is required`);
+      }
     }
 
-    const id = await this.userModel.findById(user);
-
-    if (!id) {
-      throw new BadRequestException('No user found');
+    // Fetch the user from Auth model
+    const user = await this.userModel.findById(userId).exec();
+    if (!user) {
+      throw new BadRequestException('User not found');
     }
 
-    // MUST match the schema directly
-    const data = {
+    const shuttleData = {
       name,
       phone,
       pickup,
       destination,
       date,
-      user: id._id,
+      user: user._id, // attach ObjectId
     };
 
-    const userShuttle = await this.shuttleModel.create(data);
+    const createdShuttle = await this.shuttleModel.create(shuttleData);
 
     return {
-      message: 'User booking shuttle created',
+      message: 'User shuttle booking created successfully',
       success: true,
-      userShuttle,
+      createdShuttle,
     };
   }
 }

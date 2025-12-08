@@ -7,10 +7,14 @@ import { BookingModule } from './booking/booking.module';
 import { ShuttleServicesModule } from './shuttle-services/shuttle-services.module';
 // import { FleetManagementController } from './fleet-management/fleet-management.controller';
 import { FleetManagementModule } from './fleet-management/fleet-management.module';
-import { CareerJobsController } from './career-jobs/career-jobs.controller';
-import { CareerJobsService } from './career-jobs/career-jobs.service';
+// import { CareerJobsController } from './career-jobs/career-jobs.controller';
+// import { CareerJobsService } from './career-jobs/career-jobs.service';
 import { CareerJobsModule } from './career-jobs/career-jobs.module';
 import { AdminModule } from './admin/admin.module';
+// import { RoundModule } from './trip/round/round.module';
+// import { RoundTripController } from './round-trip/round-trip.controller';
+import { RoundTripModule } from './round-trip/round-trip.module';
+import { OneWayModule } from './one-way/one-way.module';
 
 @Module({
   imports: [
@@ -49,7 +53,14 @@ import { AdminModule } from './admin/admin.module';
     CareerJobsModule,
 
     AdminModule,
+
+    // RoundModule,
+
+    RoundTripModule,
+
+    OneWayModule,
   ],
+  // controllers: [RoundTripController],
   // controllers: [CareerJobsController],
   // providers: [CareerJobsService],
 })

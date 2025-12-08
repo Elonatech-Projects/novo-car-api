@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { BadRequestException, Injectable } from '@nestjs/common';
 import { FleetManagement } from './schema/fleet-management-schema';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
@@ -13,35 +13,36 @@ export class FleetManagementService {
     @InjectModel(Auth.name) private userModel: Model<Auth>,
   ) {}
 
-  async createFleetManagement(dto: CreateFleetManagementDto, user: string) {
+  async createFleetManagement(dto: CreateFleetManagementDto, userId: string) {
     const { name, pickup, phone, destination, date, notes } = dto;
 
-    if (!name || !pickup || !phone || !destination || !date || !notes) {
-      throw new Error('All fields are to be filled');
+    for (const [key, value] of Object.entries(dto)) {
+      if (!value) {
+        throw new BadRequestException(`${key} is required`);
+      }
     }
 
-    const id = await this.userModel.findById(user);
-
-    if (!id) {
-      throw new Error('No user found');
+    const user = await this.userModel.findById(userId).exec();
+    if (!user) {
+      throw new BadRequestException('User not found');
     }
 
-    const data = {
+    const fleetData = {
       name,
       phone,
       pickup,
       destination,
       date,
       notes,
-      user: id._id,
+      user: user._id,
     };
 
-    const userFleetManagement = await this.fleetManagementModel.create(data);
+    const createdFleet = await this.fleetManagementModel.create(fleetData);
 
     return {
-      message: 'User booking fleet management created',
+      message: 'Fleet management booking created successfully',
       success: true,
-      userFleetManagement,
+      createdFleet,
     };
   }
 }
