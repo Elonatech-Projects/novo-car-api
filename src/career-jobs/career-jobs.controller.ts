@@ -1,4 +1,4 @@
-import { Controller, Req } from '@nestjs/common';
+import { Controller, Get, Req } from '@nestjs/common';
 import { Body, Post } from '@nestjs/common';
 // import { AuthGuard } from '@nestjs/passport';
 // import { CreateCareerJobDto } from './dto/create-career-job.dto';
@@ -19,5 +19,10 @@ export class CareerJobsController {
   ) {
     // const userId = req.user._id;
     return this.careerJobsService.createCareerJob(dto);
+  }
+
+  @Get('fetch/careerjobs')
+  async getAllCareerJobs() {
+    return this.careerJobsService.getCareerJob();
   }
 }

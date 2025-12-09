@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { BadRequestException, Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { CareerJobs } from './schema/career-jobs-schema';
 import { Model } from 'mongoose';
@@ -61,6 +61,20 @@ export class CareerJobsService {
       message: 'Career job created',
       success: true,
       userCareerJob,
+    };
+  }
+
+  async getCareerJob() {
+    const job = await this.careerJobsModel.find();
+
+    if (!job) {
+      throw new BadRequestException('No document found in database');
+    }
+
+    return {
+      message: 'Document Found',
+      success: true,
+      job,
     };
   }
 }
