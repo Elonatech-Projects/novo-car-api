@@ -16,6 +16,7 @@ export class BookingController {
     @Body() dto: CreateBookingDto,
   ) {
     const userId = req.user._id;
+    console.log('user-id for booking', userId);
     return this.bookingService.createBooking(userId, dto);
   }
 }

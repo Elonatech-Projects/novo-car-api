@@ -15,6 +15,14 @@ import { AdminModule } from './admin/admin.module';
 // import { RoundTripController } from './round-trip/round-trip.controller';
 import { RoundTripModule } from './round-trip/round-trip.module';
 import { OneWayModule } from './one-way/one-way.module';
+// import { SearchShuttleController } from './search-shuttle/search-shuttle.controller';
+// import { SearchShuttleService } from './search-shuttle/search-shuttle.service';
+// import { SearchShuttleModule } from './search-shuttle/search-shuttle.module';
+// import { ShuttleTripController } from './shuttle-trip/trip.controller';
+// import { ShuttleTripService } from './shuttle-trip/trip.service';
+// import { ShuttleTripModule } from './shuttle-trip/shuttle-trip.module';
+// import { RoundTripModule } from './round-trip/round-trip.module';
+import { TripModule } from './shuttle-trip/trip.module';
 
 @Module({
   imports: [
@@ -59,7 +67,14 @@ import { OneWayModule } from './one-way/one-way.module';
     RoundTripModule,
 
     OneWayModule,
+    TripModule,
+
+    // SearchShuttleModule,
+
+    // ShuttleTripModule,
   ],
+  // controllers: [SearchShuttleController, ShuttleTripController],
+  // providers: [SearchShuttleService, ShuttleTripService],
   // controllers: [RoundTripController],
   // controllers: [CareerJobsController],
   // providers: [CareerJobsService],

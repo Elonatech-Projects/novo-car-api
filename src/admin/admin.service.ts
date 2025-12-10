@@ -4,34 +4,37 @@ import { Admin } from './schema/admin-schema';
 import { Model } from 'mongoose';
 import { JwtService } from '@nestjs/jwt';
 import * as bcrypt from 'bcrypt';
+import { JwtPayload } from './jwt.admin.types';
+import { Types } from 'mongoose';
 
 @Injectable()
 export class AdminService {
   constructor(
     @InjectModel(Admin.name) private readonly adminModel: Model<Admin>,
     private readonly jwtService: JwtService,
-  ) {}
+  ) { }
 
+  // ============================
+  // Create Admin (NO TOKEN RETURNED)
+  // ============================
   async createAdmin(createAdminDto: { email: string; password: string }) {
     const { email, password } = createAdminDto;
-    const fields = { email, password };
 
     if (!email || !password) {
-      throw new BadRequestException('All fields are required');
+      throw new BadRequestException('Email and password are required');
     }
-    for (const [key, value] of Object.entries(fields)) {
-      if (!value) {
-        throw new BadRequestException(`${key} is required`);
-      }
-    }
+
     const existingAdmin = await this.adminModel.findOne({ email });
     if (existingAdmin) {
       throw new BadRequestException('Email already registered');
     }
-    const salt = await bcrypt.genSalt();
-    const hashedPassword = await bcrypt.hash(password, salt);
-    const data = { ...createAdminDto, password: hashedPassword };
-    const admin = await this.adminModel.create(data);
+
+    const hashedPassword = await bcrypt.hash(password, 10);
+
+    const admin = await this.adminModel.create({
+      email,
+      password: hashedPassword,
+    });
 
     return {
       message: 'Admin created successfully',
@@ -42,6 +45,10 @@ export class AdminService {
       },
     };
   }
+
+  // ============================
+  // Login Admin (ONLY HERE RETURN TOKEN)
+  // ============================
   async loginAdmin(email: string, password: string) {
     if (!email || !password) {
       throw new BadRequestException('Email and password are required');
@@ -51,14 +58,19 @@ export class AdminService {
     if (!registeredAdmin) {
       throw new BadRequestException('Invalid credentials');
     }
-    const checkPassword = await bcrypt.compare(password, registeredAdmin.password);
-    if (!checkPassword) {
+
+    const passwordMatch = await bcrypt.compare(password, registeredAdmin.password);
+    if (!passwordMatch) {
       throw new BadRequestException('Invalid credentials');
     }
 
-    const payload = { email: registeredAdmin.email, sub: registeredAdmin._id };
+    const payload: JwtPayload = {
+      email: registeredAdmin.email,
+      sub: String(registeredAdmin._id),
+    };
+
+    // Generate JWT token ONLY on login
     const token = this.jwtService.sign(payload);
-    console.log('Generated JWT Token:', token);
 
     return {
       message: 'Login successful',

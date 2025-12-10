@@ -5,7 +5,7 @@ import { LoginResponse } from './auth.service';
 
 @Controller('auth')
 export class AuthController {
-  constructor(private readonly authService: AuthService) { }
+  constructor(private readonly authService: AuthService) {}
 
   @Post('create')
   async createUser(@Body() dto: CreateAuthDto) {
