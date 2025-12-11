@@ -1,7 +1,7 @@
 import {
   BadRequestException,
   Injectable,
-  NotFoundException,
+  // NotFoundException,
 } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
@@ -21,7 +21,7 @@ export class TripService {
   async createTrip(dto: CreateTripDto, adminId: string) {
     const { from, to, departureDate, returnDate, tripType } = dto;
 
-    if (!from || !to || !departureDate || !tripType) {
+    if (!from || !to || !departureDate) {
       throw new BadRequestException('Required trip fields are missing');
     }
 
@@ -47,27 +47,45 @@ export class TripService {
   }
 
   // User: search for trips
-  async searchTrips(dto: SearchTripDto): Promise<Trip[]> {
-    const query: any = {
-      from: dto.from,
-      to: dto.to,
-      tripType: dto.tripType,
-      departureDate: dto.departureDate,
+  async searchTrips(fields: SearchTripDto) {
+    const { from, to, departureDate, returnDate, tripType } = fields;
+
+    const filter: Record<string, any> = {};
+
+    if (from) {
+      filter.from = { $regex: from, $options: 'i' };
+    }
+
+    if (to) {
+      filter.to = { $regex: to, $options: 'i' };
+    }
+
+    if (departureDate) {
+      filter.departureDate = { $regex: departureDate, $options: 'i' };
+    }
+
+    if (returnDate) {
+      filter.returnDate = { $regex: returnDate, $options: 'i' };
+    }
+
+    if (tripType) {
+      filter.tripType = { $regex: tripType, $options: 'i' };
+    }
+
+    const tripSearch = await this.tripModel.find(filter);
+
+    if (!tripSearch) {
+      throw new BadRequestException('No trip search found in database');
+    }
+
+    return {
+      message: 'Search field trip found',
+      success: true,
+      tripSearch,
     };
-
-    if (dto.tripType === 'round-trip' && dto.returnDate) {
-      query.returnDate = dto.returnDate;
-    }
-
-    const trips = await this.tripModel.find(query).exec();
-    if (!trips.length) {
-      throw new NotFoundException('No trips found for your search');
-    }
-    return trips;
   }
 
   // Optional: get all trips (Admin)
-  async getAllTrips(): Promise<Trip[]> {
-    return this.tripModel.find().exec();
-  }
+  // async getAllTrips(): Promise<Trip[]> {
+  //   return this.tripModel.find().exec();
 }

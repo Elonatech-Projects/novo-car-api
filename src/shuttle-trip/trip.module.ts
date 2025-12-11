@@ -12,5 +12,6 @@ import { Admin, AdminSchema } from '../admin/schema/admin-schema';
   ],
   providers: [TripService],
   controllers: [TripController],
+  exports: [TripService],
 })
 export class TripModule {}

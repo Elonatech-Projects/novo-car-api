@@ -11,7 +11,7 @@ export class SearchTripDto {
   to: string;
 
   @IsString()
-  @IsNotEmpty()
+  @IsOptional()
   departureDate: string;
 
   @IsOptional()
@@ -19,5 +19,6 @@ export class SearchTripDto {
   returnDate?: string;
 
   @IsEnum(['one-way', 'round-trip'])
-  tripType: TripType;
+  @IsOptional()
+  tripType?: TripType;
 }

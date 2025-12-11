@@ -1,4 +1,10 @@
-import { IsString, IsNotEmpty, IsOptional, IsEnum } from 'class-validator';
+import {
+  IsString,
+  IsNotEmpty,
+  IsOptional,
+  IsEnum,
+  IsNumber,
+} from 'class-validator';
 import type { TripType } from '../schema/trip.schema';
 
 export class CreateTripDto {
@@ -18,6 +24,11 @@ export class CreateTripDto {
   @IsString()
   returnDate?: string;
 
+  @IsOptional()
+  @IsNumber()
+  price?: number;
+
   @IsEnum(['one-way', 'round-trip'])
-  tripType: TripType;
+  @IsOptional()
+  tripType?: TripType;
 }

@@ -19,8 +19,11 @@ export class Trip {
   @Prop()
   returnDate?: string;
 
+  @Prop()
+  price?: number;
+
   @Prop({ required: true, enum: ['one-way', 'round-trip'] })
-  tripType: TripType;
+  tripType?: TripType;
 }
 
 export const TripSchema = SchemaFactory.createForClass(Trip);
