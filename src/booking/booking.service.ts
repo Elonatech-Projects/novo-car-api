@@ -38,4 +38,17 @@ export class BookingService {
       userBooking,
     };
   }
+
+  async getAllBookings() {
+    const findAllBookings = await this.bookingModel.find();
+
+    if (!findAllBookings) {
+      throw new BadRequestException('No request');
+    }
+    return {
+      message: 'Document found',
+      success: true,
+      findAllBookings,
+    };
+  }
 }

@@ -86,6 +86,18 @@ export class TripService {
   }
 
   // Optional: get all trips (Admin)
-  // async getAllTrips(): Promise<Trip[]> {
-  //   return this.tripModel.find().exec();
+  async getAllTrips() {
+    // return this.tripModel.find().exec();
+    const findAllTrip = await this.tripModel.find();
+
+    if (!findAllTrip) {
+      throw new BadRequestException('Bad request');
+    }
+
+    return {
+      message: 'Found document',
+      success: true,
+      findAllTrip,
+    };
+  }
 }

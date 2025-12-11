@@ -10,7 +10,7 @@ import {
 import { TripService } from './trip.service';
 import { CreateTripDto } from './dto/create-trip.dto';
 import { SearchTripDto } from './dto/search-trip.dto';
-import { JwtAuthGuard } from '../admin/guards/jwt-auth.guard';
+import { JwtAdminGuard } from '../admin/guards/jwt-auth.guard';
 import { Request } from 'express';
 import { JwtUser } from '../admin/jwt.admin.types';
 
@@ -19,7 +19,7 @@ export class TripController {
   constructor(private readonly tripService: TripService) {}
 
   // Admin: create trip
-  @UseGuards(JwtAuthGuard)
+  @UseGuards(JwtAdminGuard)
   @Post('create')
   async createTrip(
     @Req() req: Request & { user: JwtUser },
@@ -38,9 +38,9 @@ export class TripController {
   }
 
   // Admin: get all trips
-  // @UseGuards(JwtAuthGuard)
-  // @Get()
-  // async getAllTrips() {
-  //   return this.tripService.getAllTrips();
-  // }
+  @UseGuards(JwtAdminGuard)
+  @Get('find-all-trip')
+  async getAllTrips() {
+    return this.tripService.getAllTrips();
+  }
 }
