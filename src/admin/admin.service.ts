@@ -5,14 +5,14 @@ import { Model } from 'mongoose';
 import { JwtService } from '@nestjs/jwt';
 import * as bcrypt from 'bcrypt';
 import { JwtPayload } from './jwt.admin.types';
-import { Types } from 'mongoose';
+// import { Types } from 'mongoose';
 
 @Injectable()
 export class AdminService {
   constructor(
     @InjectModel(Admin.name) private readonly adminModel: Model<Admin>,
     private readonly jwtService: JwtService,
-  ) { }
+  ) {}
 
   // ============================
   // Create Admin (NO TOKEN RETURNED)

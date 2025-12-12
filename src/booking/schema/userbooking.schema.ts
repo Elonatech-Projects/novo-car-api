@@ -3,7 +3,7 @@ import { Document, Types } from 'mongoose';
 import { Auth } from '../../auth/schema/auth-schema';
 
 @Schema({ timestamps: true })
-export class Booking extends Document {
+export class UserBooking extends Document {
   @Prop({ type: Types.ObjectId, ref: Auth.name, required: true })
   userId: Types.ObjectId;
 
@@ -26,4 +26,4 @@ export class Booking extends Document {
   passengers: number;
 }
 
-export const BookingSchema = SchemaFactory.createForClass(Booking);
+export const UserBookingSchema = SchemaFactory.createForClass(UserBooking);

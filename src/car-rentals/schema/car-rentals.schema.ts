@@ -31,8 +31,8 @@ export class UserCarForm extends Document {
   @Prop({ required: true })
   notes: string;
 
-  @Prop({ required: true })
-  subModel: string;
+  @Prop()
+  subModel?: string;
 }
 
 export const CarRentalsSchema = SchemaFactory.createForClass(UserCarForm);

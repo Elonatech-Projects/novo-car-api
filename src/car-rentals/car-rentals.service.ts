@@ -14,6 +14,7 @@ export class CarRentalsService {
   ) {}
 
   async createCarRentals(dto: CarRentalsDto, userId: string) {
+    // Destructure all fields including optional
     const {
       bookingCategory,
       bookingModel,
@@ -26,18 +27,8 @@ export class CarRentalsService {
       subModel,
     } = dto;
 
-    for (const [key, value] of Object.entries(dto)) {
-      if (!value) {
-        throw new BadRequestException(`${key} is required`);
-      }
-    }
-
-    const user = await this.userModel.findById(userId).exec();
-    if (!user) {
-      throw new BadRequestException('User not found');
-    }
-
-    const carRentalData = {
+    // Check required fields only
+    const requiredFields = {
       bookingCategory,
       bookingModel,
       name,
@@ -46,14 +37,53 @@ export class CarRentalsService {
       pickupDate,
       dropoffDate,
       notes,
-      subModel,
-      userId: user._id, // match schema
     };
 
+    for (const [key, value] of Object.entries(requiredFields)) {
+      if (!value) {
+        throw new BadRequestException(`${key} is required`);
+      }
+    }
+
+    // Validate dates
+    const pickup = new Date(pickupDate);
+    const dropoff = new Date(dropoffDate);
+    const today = new Date();
+    today.setHours(0, 0, 0, 0); // Ignore time
+
+    if (pickup < today) {
+      throw new BadRequestException('Pickup date cannot be in the past.');
+    }
+
+    if (dropoff <= pickup) {
+      throw new BadRequestException('Dropoff must be after pickup date.');
+    }
+
+    // Find user
+    const user = await this.userModel.findById(userId).exec();
+    if (!user) {
+      throw new BadRequestException('User not found');
+    }
+
+    // Build rental object
+    const carRentalData = {
+      bookingCategory,
+      bookingModel,
+      name,
+      email,
+      phoneNumber,
+      pickupDate: pickup,
+      dropoffDate: dropoff,
+      notes,
+      subModel: subModel || null, // optional
+      userId: user._id,
+    };
+
+    // Save to DB
     const createdCarRental = await this.carRentalModel.create(carRentalData);
 
     return {
-      message: 'Car Rentals created successfully',
+      message: 'Car rental created successfully',
       success: true,
       createdCarRental,
     };

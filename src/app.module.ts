@@ -11,6 +11,8 @@ import { RoundTripModule } from './round-trip/round-trip.module';
 import { OneWayModule } from './one-way/one-way.module';
 import { TripModule } from './shuttle-trip/trip.module';
 import { CarRentalsModule } from './car-rentals/car-rentals.module';
+// import { AdminBookingController } from './admin-booking/admin-booking.controller';
+import { AdminBookingModule } from './admin-booking/admin-booking.module';
 
 @Module({
   imports: [
@@ -55,6 +57,8 @@ import { CarRentalsModule } from './car-rentals/car-rentals.module';
     OneWayModule,
     TripModule,
     CarRentalsModule,
+    AdminBookingModule,
   ],
+  // controllers: [AdminBookingController],
 })
 export class AppModule {}

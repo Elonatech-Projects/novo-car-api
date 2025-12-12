@@ -1,16 +1,22 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
-import { Booking } from './schema/booking.schema';
-import { CreateBookingDto } from './dto/create-booking.dto';
+import { UserBooking } from './schema/userbooking.schema';
+// import { CreateAdminBookingDto } from '../admin-booking/dto/create-admin-booking.dto';
+
 import { Auth } from '../auth/schema/auth-schema';
+// import { SearchBookingDto } from './dto/search-booking.dto';
+import { CreateBookingDto } from './dto/createbooking.dto';
+// import { Admin } from '../admin/schema/admin-schema';
+// import { createAdminBooking } from '../admin-booking/schema/adminbooking.schema';
 // import { JwtUser } from '../auth/jwt.types';
 
 @Injectable()
-export class BookingService {
+export class UserBookingService {
   constructor(
-    @InjectModel(Booking.name) private bookingModel: Model<Booking>,
+    @InjectModel(UserBooking.name) private bookingModel: Model<UserBooking>,
     @InjectModel(Auth.name) private userModel: Model<Auth>,
+    // @InjectModel(createAdminBooking.name) private AdminModel: Model<Admin>,
   ) {}
 
   async createBooking(userId: string, dto: CreateBookingDto) {
@@ -51,4 +57,8 @@ export class BookingService {
       findAllBookings,
     };
   }
+
+  // async searchBookings (fields: SearchBookingDto) {
+  //   const { pickupLocation, dropoffLocation, }
+  // }
 }

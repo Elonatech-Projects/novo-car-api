@@ -1,4 +1,4 @@
-import { IsNotEmpty, IsString } from 'class-validator';
+import { IsNotEmpty, IsOptional, IsString } from 'class-validator';
 
 export class CarRentalsDto {
   @IsString() @IsNotEmpty() bookingCategory: string;
@@ -9,5 +9,5 @@ export class CarRentalsDto {
   @IsString() @IsNotEmpty() pickupDate: string;
   @IsString() @IsNotEmpty() dropoffDate: string;
   @IsString() @IsNotEmpty() notes: string;
-  @IsString() @IsNotEmpty() subModel: string;
+  @IsString() @IsOptional() subModel: string;
 }
