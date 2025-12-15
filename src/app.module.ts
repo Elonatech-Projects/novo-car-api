@@ -13,6 +13,7 @@ import { TripModule } from './shuttle-trip/trip.module';
 import { CarRentalsModule } from './car-rentals/car-rentals.module';
 // import { AdminBookingController } from './admin-booking/admin-booking.controller';
 import { AdminBookingModule } from './admin-booking/admin-booking.module';
+import { GuestBookingModule } from './guest-booking/guest-booking.module';
 
 @Module({
   imports: [
@@ -58,6 +59,7 @@ import { AdminBookingModule } from './admin-booking/admin-booking.module';
     TripModule,
     CarRentalsModule,
     AdminBookingModule,
+    GuestBookingModule,
   ],
   // controllers: [AdminBookingController],
 })

@@ -1,4 +1,12 @@
-import { Controller, Post, Body, Req, UseGuards, Get, Query } from '@nestjs/common';
+import {
+  Controller,
+  Post,
+  Body,
+  Req,
+  UseGuards,
+  Get,
+  Query,
+} from '@nestjs/common';
 import { JwtAdminGuard } from '../admin/guards/jwt-auth.guard';
 import { AdminBookingService } from './admin-booking.service';
 import { CreateAdminBookingDto } from './dto/create-admin-booking.dto';
