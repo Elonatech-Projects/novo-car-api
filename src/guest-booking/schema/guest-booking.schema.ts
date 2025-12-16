@@ -36,11 +36,17 @@ export class GuestBooking extends Document {
   shuttleType: string;
 
   @Prop({ required: true })
-  price: string;
+  price: number;
 
   // Status (important for ops)
   @Prop({ default: 'pending' })
   status: 'pending' | 'paid' | 'cancelled';
+
+  @Prop()
+  reference: string;
+
+  @Prop()
+  paidAt?: Date;
 }
 
 export const GuestBookingSchema = SchemaFactory.createForClass(GuestBooking);

@@ -24,6 +24,14 @@ export class UserBooking extends Document {
 
   @Prop({ required: true })
   passengers: number;
+
+  // Trip ID
+  @Prop({ required: true })
+  tripId: string;
+
+  //Status Very Important for Operation
+  @Prop({ default: 'pending' })
+  status: 'pending' | 'paid' | 'cancelled';
 }
 
 export const UserBookingSchema = SchemaFactory.createForClass(UserBooking);

@@ -36,6 +36,7 @@ export class AdminBookingController {
     return this.adminBookingService.getAdminBookings();
   }
 
+  //Search for Bookings
   @Get('search-trips')
   async getAllBookings(@Query() field: SearchBookingDto) {
     return this.adminBookingService.getAllBooking(field);

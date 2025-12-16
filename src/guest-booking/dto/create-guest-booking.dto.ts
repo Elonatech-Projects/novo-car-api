@@ -1,4 +1,4 @@
-import { IsNotEmpty, IsString, IsEmail } from 'class-validator';
+import { IsNotEmpty, IsString, IsEmail, IsNumber } from 'class-validator';
 
 export class CreateGuestBookingDto {
   // Guest info
@@ -43,6 +43,6 @@ export class CreateGuestBookingDto {
   shuttleType: string;
 
   @IsString()
-  @IsNotEmpty()
-  price: string;
+  @IsNumber()
+  price: number;
 }

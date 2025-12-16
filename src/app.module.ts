@@ -14,6 +14,7 @@ import { CarRentalsModule } from './car-rentals/car-rentals.module';
 // import { AdminBookingController } from './admin-booking/admin-booking.controller';
 import { AdminBookingModule } from './admin-booking/admin-booking.module';
 import { GuestBookingModule } from './guest-booking/guest-booking.module';
+import { MoServicesModule } from './mo-services/mo-services.module';
 
 @Module({
   imports: [
@@ -60,7 +61,7 @@ import { GuestBookingModule } from './guest-booking/guest-booking.module';
     CarRentalsModule,
     AdminBookingModule,
     GuestBookingModule,
+    MoServicesModule,
   ],
-  // controllers: [AdminBookingController],
 })
 export class AppModule {}
