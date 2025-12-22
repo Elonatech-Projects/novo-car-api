@@ -13,8 +13,19 @@ export class FleetManagementService {
     @InjectModel(Auth.name) private userModel: Model<Auth>,
   ) {}
 
-  async createFleetManagement(dto: CreateFleetManagementDto, userId: string) {
-    const { name, pickup, phone, destination, date, notes } = dto;
+  async createFleetManagement(dto: CreateFleetManagementDto) {
+    const {
+      name,
+      email,
+      pickup,
+      phone,
+      destination,
+      date,
+      time,
+      passengerCount,
+      cargoDescription,
+      specialRequests,
+    } = dto;
 
     for (const [key, value] of Object.entries(dto)) {
       if (!value) {
@@ -22,19 +33,25 @@ export class FleetManagementService {
       }
     }
 
-    const user = await this.userModel.findById(userId).exec();
-    if (!user) {
-      throw new BadRequestException('User not found');
-    }
+    // const user = await this.userModel.findById(userId).exec();
+    // if (!user) {
+    //   throw new BadRequestException('User not found');
+    // }
 
     const fleetData = {
       name,
+      email,
       phone,
       pickup,
       destination,
       date,
-      notes,
-      user: user._id,
+      time,
+      passengerCount,
+      cargoDescription,
+      specialRequests,
+      // notes:
+      // notes,
+      // user: user._id,
     };
 
     const createdFleet = await this.fleetManagementModel.create(fleetData);

@@ -9,5 +9,6 @@ export class CarRentalsDto {
   @IsString() @IsNotEmpty() pickupDate: string;
   @IsString() @IsNotEmpty() dropoffDate: string;
   @IsString() @IsNotEmpty() notes: string;
-  @IsString() @IsOptional() subModel: string;
+  @IsString() @IsOptional() subModel?: string;
+  @IsString() @IsOptional() price?: string;
 }

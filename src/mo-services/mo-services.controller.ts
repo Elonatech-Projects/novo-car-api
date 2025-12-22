@@ -1,4 +1,4 @@
-import { Body, Controller, Post } from '@nestjs/common';
+import { Body, Controller, Get, Post } from '@nestjs/common';
 import { MoServicesService } from './mo-services.service';
 import { CreateMoServicesDto } from './dto/mo-services.dto';
 
@@ -9,5 +9,9 @@ export class MoServicesController {
   @Post('create')
   async createManOutsourcing(@Body() dto: CreateMoServicesDto) {
     return this.ManOutsourcingService.createManOutsourcing(dto);
+  }
+  @Get()
+  getAllRequests() {
+    return this.ManOutsourcingService.getAllManPowerRequests();
   }
 }

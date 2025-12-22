@@ -1,9 +1,9 @@
-import { Body, Controller, Post, Req, UseGuards } from '@nestjs/common';
-import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
+import { Body, Controller, Post } from '@nestjs/common';
+// import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { FleetManagementService } from './fleet-management.service';
 import { CreateFleetManagementDto } from './dto/create-fleet-management.dto';
 import { Request } from 'express';
-import { JwtUser } from '../auth/jwt.types';
+// import { JwtUser } from '../auth/jwt.types';
 
 @Controller('fleet-management')
 export class FleetManagementController {
@@ -12,12 +12,12 @@ export class FleetManagementController {
   ) {}
 
   @Post('create')
-  @UseGuards(JwtAuthGuard)
+  // @UseGuards(JwtAuthGuard)
   async createFleetManagement(
-    @Req() req: Request & { user: JwtUser },
+    // @Req()
     @Body() dto: CreateFleetManagementDto,
   ) {
-    const userId = req.user._id;
-    return this.fleetManagementService.createFleetManagement(dto, userId);
+    // const userId = req.user._id;
+    return this.fleetManagementService.createFleetManagement(dto);
   }
 }

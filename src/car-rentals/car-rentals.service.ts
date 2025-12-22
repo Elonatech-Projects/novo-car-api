@@ -13,7 +13,7 @@ export class CarRentalsService {
     @InjectModel(Auth.name) private userModel: Model<Auth>,
   ) {}
 
-  async createCarRentals(dto: CarRentalsDto, userId: string) {
+  async createCarRentals(dto: CarRentalsDto) {
     // Destructure all fields including optional
     const {
       bookingCategory,
@@ -60,10 +60,10 @@ export class CarRentalsService {
     }
 
     // Find user
-    const user = await this.userModel.findById(userId).exec();
-    if (!user) {
-      throw new BadRequestException('User not found');
-    }
+    // const user = await this.userModel.findById(userId).exec();
+    // if (!user) {
+    //   throw new BadRequestException('User not found');
+    // }
 
     // Build rental object
     const carRentalData = {
@@ -76,7 +76,7 @@ export class CarRentalsService {
       dropoffDate: dropoff,
       notes,
       subModel: subModel || null, // optional
-      userId: user._id,
+      // userId: user._id,
     };
 
     // Save to DB

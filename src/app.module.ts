@@ -15,6 +15,8 @@ import { CarRentalsModule } from './car-rentals/car-rentals.module';
 import { AdminBookingModule } from './admin-booking/admin-booking.module';
 import { GuestBookingModule } from './guest-booking/guest-booking.module';
 import { MoServicesModule } from './mo-services/mo-services.module';
+import { BookingsModule } from './bookings/bookings.module';
+// import { PaymentsService } from './payments/paystack.service';
 
 @Module({
   imports: [
@@ -62,6 +64,8 @@ import { MoServicesModule } from './mo-services/mo-services.module';
     AdminBookingModule,
     GuestBookingModule,
     MoServicesModule,
+    BookingsModule,
   ],
+  // providers: [PaymentsService],
 })
 export class AppModule {}

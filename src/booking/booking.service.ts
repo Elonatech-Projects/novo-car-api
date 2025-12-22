@@ -6,7 +6,7 @@ import { UserBooking } from './schema/userbooking.schema';
 
 import { Auth } from '../auth/schema/auth-schema';
 // import { SearchBookingDto } from './dto/search-booking.dto';
-import { CreateBookingDto } from './dto/createbooking.dto';
+import { CreateBookingDto } from './dto/create-booking.dto';
 // import { Admin } from '../admin/schema/admin-schema';
 // import { createAdminBooking } from '../admin-booking/schema/adminbooking.schema';
 // import { JwtUser } from '../auth/jwt.types';

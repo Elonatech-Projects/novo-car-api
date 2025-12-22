@@ -4,8 +4,8 @@ import { Auth } from '../../auth/schema/auth-schema';
 
 @Schema({ timestamps: true })
 export class UserCarForm extends Document {
-  @Prop({ type: Types.ObjectId, ref: Auth.name, required: true })
-  userId: Types.ObjectId;
+  @Prop({ type: Types.ObjectId, ref: Auth.name })
+  userId?: Types.ObjectId;
 
   @Prop({ required: true })
   bookingCategory: string;
@@ -33,6 +33,9 @@ export class UserCarForm extends Document {
 
   @Prop()
   subModel?: string;
+
+  @Prop()
+  price?: string;
 }
 
 export const CarRentalsSchema = SchemaFactory.createForClass(UserCarForm);
