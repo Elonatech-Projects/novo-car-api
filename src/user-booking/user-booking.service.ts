@@ -1,7 +1,7 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
-import { UserBooking } from './schema/userbooking.schema';
+import { UserBooking } from './schema/user-booking.schema';
 // import { CreateAdminBookingDto } from '../admin-booking/dto/create-admin-booking.dto';
 
 import { Auth } from '../auth/schema/auth-schema';

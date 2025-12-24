@@ -1,9 +1,11 @@
+// src/bookings/bookings.service.ts
 import { BadRequestException, Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 import { Bookings, BookingDocument } from './schemas/bookings.schema';
 import { CreateBookingsDto } from './dto/create-bookings.dto';
 import { BookingPayment } from './types/payment.type';
+import { v4 as uuidv4 } from 'uuid';
 
 @Injectable()
 export class BookingsService {
@@ -13,6 +15,7 @@ export class BookingsService {
   ) {}
 
   async create(dto: CreateBookingsDto): Promise<BookingDocument> {
+    // Guest validation
     if (!dto.userId) {
       if (!dto.firstName || !dto.lastName || !dto.email || !dto.phoneNumber) {
         throw new BadRequestException(
@@ -21,8 +24,12 @@ export class BookingsService {
       }
     }
 
+    // ✅ Generate booking reference safely
+    const bookingReference = `BOOK-${uuidv4().split('-')[0].toUpperCase()}`;
+
     const booking = new this.bookingModel({
       ...dto,
+      bookingReference,
       status: 'pending',
     });
 
@@ -30,35 +37,20 @@ export class BookingsService {
   }
 
   async findAll(userId?: string): Promise<BookingDocument[]> {
-    const filter = userId ? { userId } : {};
-    return this.bookingModel.find(filter).sort({ createdAt: -1 }).exec();
-  }
-
-  async findOne(id: string): Promise<BookingDocument> {
-    const booking = await this.bookingModel.findById(id).exec();
-    if (!booking) {
-      throw new BadRequestException('Booking not found');
-    }
-    return booking;
+    return this.bookingModel
+      .find(userId ? { userId } : {})
+      .sort({ createdAt: -1 })
+      .exec();
   }
 
   async findByReference(bookingReference: string): Promise<BookingDocument> {
     const booking = await this.bookingModel
       .findOne({ bookingReference })
       .exec();
-
-    if (!booking) {
-      throw new BadRequestException('Booking not found');
-    }
-
+    if (!booking) throw new BadRequestException('Booking not found');
     return booking;
   }
 
-  /**
-   * Safe payment update
-   * - prevents duplicate payment within 5 minutes
-   * - atomic DB update
-   */
   async updatePayment(
     bookingReference: string,
     payment: BookingPayment,
@@ -98,10 +90,8 @@ export class BookingsService {
     email: string,
     bookingReference: string,
   ): Promise<void> {
-    // Later: integrate Nodemailer / SendGrid
     console.log(
       `📧 Sending booking confirmation to ${email} for booking ${bookingReference}`,
     );
   }
-
 }

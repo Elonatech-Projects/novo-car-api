@@ -14,7 +14,7 @@ export class BookingsController {
    * - Logged-in user: req.user exists
    */
   @Post('create')
-  async create(
+  async createBooking(
     @Body() createBookingDto: CreateBookingsDto,
     @Req() req: Request & { user?: JwtUser },
   ) {
@@ -36,16 +36,22 @@ export class BookingsController {
     return this.bookingsService.findAll(req.user?._id);
   }
 
-  @Get(':id')
-  async findOne(@Param('id') id: string) {
-    return this.bookingsService.findOne(id);
+  @Get(':reference')
+  async findOne(@Param('reference') reference: string) {
+    return this.bookingsService.findByReference(reference);
   }
 
   @Post('send-confirmation')
-  async sendConfirmation(@Body() body: { email: string; bookingId: string }) {
+  async sendConfirmation(
+    @Body()
+    body: {
+      email: string;
+      bookingReference: string;
+    },
+  ) {
     await this.bookingsService.sendConfirmationEmail(
       body.email,
-      body.bookingId,
+      body.bookingReference,
     );
 
     return { message: 'Confirmation email sent' };

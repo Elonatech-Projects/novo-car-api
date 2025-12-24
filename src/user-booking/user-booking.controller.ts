@@ -8,7 +8,7 @@ import {
   // Query,
 } from '@nestjs/common';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
-import { UserBookingService } from './booking.service';
+import { UserBookingService } from './user-booking.service';
 // import { CreateBookingDto } from './dto/create-admin-booking.dto';
 import { JwtUser } from '../auth/jwt.types';
 import { Request } from 'express';

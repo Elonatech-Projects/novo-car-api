@@ -2,7 +2,7 @@ import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import { Document, Types } from 'mongoose';
 import { Auth } from '../../auth/schema/auth-schema';
 
-@Schema({ timestamps: true })
+@Schema({ timestamps: true, collection: 'user_bookings' })
 export class UserBooking extends Document {
   @Prop({ type: Types.ObjectId, ref: Auth.name, required: true })
   userId: Types.ObjectId;

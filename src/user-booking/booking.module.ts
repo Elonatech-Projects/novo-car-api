@@ -7,9 +7,9 @@ import { MongooseModule } from '@nestjs/mongoose';
 import { JwtStrategy } from '../auth/jwt/jwt.strategy';
 // import { createAdminBooking } from '../admin-booking/schema/adminbooking.schema';
 // import { AdminService } from '../admin/admin.service';
-import { UserBooking, UserBookingSchema } from './schema/userbooking.schema';
-import { UserBookingController } from './booking.controller';
-import { UserBookingService } from './booking.service';
+import { UserBooking, UserBookingSchema } from './schema/user-booking.schema';
+import { UserBookingController } from './user-booking.controller';
+import { UserBookingService } from './user-booking.service';
 import { Auth, AuthSchema } from '../auth/schema/auth-schema';
 
 @Module({

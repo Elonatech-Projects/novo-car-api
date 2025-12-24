@@ -1,5 +1,5 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import { BookingController } from './booking.controller';
+import { BookingController } from './user-booking.controller';
 
 describe('BookingController', () => {
   let controller: BookingController;

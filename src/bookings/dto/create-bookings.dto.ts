@@ -1,11 +1,5 @@
-import {
-  IsString,
-  IsNumber,
-  IsOptional,
-  IsEmail,
-  // IsEnum,
-} from 'class-validator';
-import { PaymentMethod, PaymentStatus } from '../types/payment.type';
+// src/bookings/dto/create-bookings.dto.ts
+import { IsString, IsNumber, IsOptional, IsEmail, Min } from 'class-validator';
 
 export class CreateBookingsDto {
   @IsString()
@@ -24,9 +18,10 @@ export class CreateBookingsDto {
   pickupTime: string;
 
   @IsNumber()
+  @Min(1)
   numberOfPassengers: number;
 
-  // Guest fields (required only if userId is absent – enforced in service)
+  // Guest fields (required if userId is absent – enforced in service)
   @IsOptional()
   @IsString()
   firstName?: string;
@@ -57,19 +52,7 @@ export class CreateBookingsDto {
   @IsOptional() @IsNumber() tourDuration?: number;
   @IsOptional() @IsString() accommodationType?: string;
 
+  // System
   @IsOptional()
   userId?: string;
-
-  @IsString()
-  bookingReference: string;
-
-  @IsOptional()
-  payment?: {
-    method: PaymentMethod;
-    amount: number;
-    status: PaymentStatus;
-    verified: boolean;
-    reference?: string;
-    paystackReference?: string;
-  };
 }
