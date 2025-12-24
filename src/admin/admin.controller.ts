@@ -8,12 +8,13 @@ export class AdminController {
 
   @Post('create')
   async createAdmin(@Body() dto: CreateAdminDto) {
+    console.log(dto);
     return this.adminService.createAdmin(dto);
   }
 
   @Post('sign-in')
-  async signAdminIn(@Body() body: { email: string; password: string }) {
-    const { email, password } = body;
-    return this.adminService.loginAdmin(email, password);
+  async signAdminIn(@Body() dto: CreateAdminDto) {
+    // const { email, password } = body;
+    return this.adminService.loginAdmin(dto.email, dto.password);
   }
 }

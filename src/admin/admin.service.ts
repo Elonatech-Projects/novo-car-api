@@ -1,23 +1,28 @@
-import { BadRequestException, Injectable } from '@nestjs/common';
+import {
+  BadRequestException,
+  Injectable,
+  UnauthorizedException,
+} from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
-import { Admin } from './schema/admin-schema';
+import { Admin, AdminDocument } from './schema/admin-schema';
 import { Model } from 'mongoose';
 import { JwtService } from '@nestjs/jwt';
 import * as bcrypt from 'bcrypt';
 import { JwtPayload } from './jwt.admin.types';
+import { CreateAdminDto } from './dto/create-admin-dto';
 // import { Types } from 'mongoose';
 
 @Injectable()
 export class AdminService {
   constructor(
-    @InjectModel(Admin.name) private readonly adminModel: Model<Admin>,
+    @InjectModel(Admin.name) private readonly adminModel: Model<AdminDocument>,
     private readonly jwtService: JwtService,
   ) {}
 
   // ============================
   // Create Admin (NO TOKEN RETURNED)
   // ============================
-  async createAdmin(createAdminDto: { email: string; password: string }) {
+  async createAdmin(createAdminDto: CreateAdminDto) {
     const { email, password } = createAdminDto;
 
     if (!email || !password) {
@@ -56,10 +61,13 @@ export class AdminService {
 
     const registeredAdmin = await this.adminModel.findOne({ email });
     if (!registeredAdmin) {
-      throw new BadRequestException('Invalid credentials');
+      throw new UnauthorizedException('Invalid credentials');
     }
 
-    const passwordMatch = await bcrypt.compare(password, registeredAdmin.password);
+    const passwordMatch = await bcrypt.compare(
+      password,
+      registeredAdmin.password,
+    );
     if (!passwordMatch) {
       throw new BadRequestException('Invalid credentials');
     }

@@ -1,19 +1,23 @@
 import { ValidationPipe } from '@nestjs/common';
 import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
-import * as bodyParser from 'body-parser';
 import { json } from 'express';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
 
-  /** ✅ PAYSTACK WEBHOOK RAW BODY */
-  // app.use('/payments/webhook', bodyParser.raw({ type: 'application/json' }));
-  app.use('/payments/webhook', json({ 
-    verify: (req: any, res, buf) => {
-      req.rawBody = buf.toString('utf8');
-    }
-  }));
+  /** ✅ NORMAL JSON PARSER (MUST COME FIRST) */
+  app.use(json());
+
+  /** ✅ PAYSTACK WEBHOOK RAW BODY (ONLY THIS ROUTE) */
+  app.use(
+    '/payments/webhook',
+    json({
+      verify: (req: any, _res, buf) => {
+        req.rawBody = buf.toString();
+      },
+    }),
+  );
 
   /** ✅ CORS */
   app.enableCors({
