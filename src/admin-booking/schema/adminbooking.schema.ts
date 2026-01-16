@@ -24,14 +24,13 @@ export class AdminBooking extends Document {
   @Prop({ required: true })
   dropoffLocation: string;
 
-  @Prop({ required: true })
+  @Prop({})
   pickupDate: string;
 
   @Prop({ required: true })
   price: string;
 
   @Prop({
-    required: true,
     enum: [
       'Work Shuttle',
       'Airport Shuttle',

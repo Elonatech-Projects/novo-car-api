@@ -28,10 +28,11 @@ export class AuthService {
   constructor(
     @InjectModel(Auth.name) private authModel: Model<Auth>,
     private jwtService: JwtService,
-  ) { }
+  ) {}
 
   async createUser(createAuthDto: CreateAuthDto) {
-    const { name, email, password, confirmPassword, phoneNumber } = createAuthDto;
+    const { name, email, password, confirmPassword, phoneNumber } =
+      createAuthDto;
 
     // Basic validation
     if (!name || !email || !password || !confirmPassword || !phoneNumber) {
@@ -53,7 +54,7 @@ export class AuthService {
     const userData = {
       ...createAuthDto,
       password: hashedPassword,
-      confirmPassword: hashedPassword, 
+      confirmPassword: hashedPassword, // Store hashed confirmPassword as well
     };
 
     // Save user
@@ -81,7 +82,10 @@ export class AuthService {
       throw new BadRequestException('Invalid credentials');
     }
 
-    const isPasswordValid = await bcrypt.compare(password, registeredUser.password);
+    const isPasswordValid = await bcrypt.compare(
+      password,
+      registeredUser.password,
+    );
     if (!isPasswordValid) {
       throw new BadRequestException('Invalid credentials');
     }

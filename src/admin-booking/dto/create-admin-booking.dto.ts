@@ -1,4 +1,4 @@
-import { IsNotEmpty, IsString, IsEnum } from 'class-validator';
+import { IsNotEmpty, IsString, IsEnum, IsOptional } from 'class-validator';
 import type { ShuttleType } from '../schema/adminbooking.schema';
 
 export class CreateAdminBookingDto {
@@ -11,7 +11,8 @@ export class CreateAdminBookingDto {
   dropoffLocation: string;
 
   @IsString()
-  @IsNotEmpty()
+  // @IsNotEmpty()
+  @IsOptional()
   pickupDate: string;
 
   @IsString()
@@ -26,6 +27,7 @@ export class CreateAdminBookingDto {
     'Luxury Shuttle',
     'Standard Shuttle',
   ])
-  @IsNotEmpty()
+  // @IsNotEmpty()
+  @IsOptional()
   shuttleType: ShuttleType;
 }
