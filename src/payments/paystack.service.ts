@@ -1,3 +1,5 @@
+// Paystack Service: Manages Paystack payment gateway interactions.
+// paystack.service.ts
 import { Injectable, HttpException, HttpStatus } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import axios, { AxiosError } from 'axios';
@@ -9,7 +11,7 @@ import {
 
 @Injectable()
 export class PaystackService {
-  private readonly secretKey: string;
+  private readonly secretKey = process.env.PAYSTACK_SECRET_KEY;
   private readonly baseUrl = 'https://api.paystack.co';
 
   constructor(private readonly configService: ConfigService) {
@@ -27,21 +29,24 @@ export class PaystackService {
   /**
    * Initialize Paystack transaction
    */
-  async initializeTransaction(
-    email: string,
-    amount: number,
-    metadata?: Record<string, unknown>,
-  ): Promise<PaystackInitializeResponse> {
+  async initializeTransaction(data: {
+    email: string;
+    amount: number;
+    reference: string;
+    callbackUrl?: string;
+    metadata?: Record<string, unknown>;
+  }): Promise<PaystackInitializeResponse> {
     try {
       const response = await axios.post<PaystackInitializeResponse>(
         `${this.baseUrl}/transaction/initialize`,
         {
-          email,
-          amount,
-          metadata,
-          callback_url: `${this.configService.get<string>(
-            'FRONTEND_URL',
-          )}/booking/verify-payment`,
+          email: data.email,
+          amount: data.amount,
+          reference: data.reference,
+          metadata: data.metadata,
+          callback_url:
+            data.callbackUrl ??
+            `${this.configService.get<string>('FRONTEND_URL')}/booking/verify-payment`,
         },
         {
           headers: {

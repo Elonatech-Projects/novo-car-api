@@ -10,6 +10,8 @@ export type ShuttleType =
   | 'Luxury Shuttle'
   | 'Standard Shuttle';
 
+export type WeekDay = 'MON' | 'TUE' | 'WED' | 'THU' | 'FRI' | 'SAT' | 'SUN';
+
 @Schema({ timestamps: true })
 export class AdminBooking extends Document {
   @Prop({ required: true })
@@ -41,6 +43,23 @@ export class AdminBooking extends Document {
     ],
   })
   shuttleType: ShuttleType;
+
+  @Prop({
+    type: [String],
+    enum: ['MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT', 'SUN'],
+    required: true,
+  })
+  availableDays: WeekDay[];
+
+  // Payment fields
+  @Prop({ default: 'PENDING_PAYMENT' })
+  status: 'PENDING_PAYMENT' | 'PAID' | 'FAILED';
+
+  @Prop()
+  paymentRef?: string;
+
+  @Prop()
+  paidAt?: Date;
 }
 
 export const AdminBookingSchema = SchemaFactory.createForClass(AdminBooking);
