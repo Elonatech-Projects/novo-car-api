@@ -1,12 +1,15 @@
+// Create AdminBookingDto;
 import {
   IsNotEmpty,
   IsString,
   IsEnum,
   IsOptional,
-  ArrayNotEmpty,
+  // ArrayNotEmpty,
   IsArray,
+  IsNumber,
 } from 'class-validator';
-import type { ShuttleType, WeekDay } from '../schema/adminbooking.schema';
+import type { ShuttleType } from '../schema/adminbooking.schema';
+import { Type } from 'class-transformer';
 
 export class CreateAdminBookingDto {
   @IsString()
@@ -22,9 +25,10 @@ export class CreateAdminBookingDto {
   @IsOptional()
   pickupDate: string;
 
-  @IsString()
-  @IsOptional()
-  price: string;
+  // @IsString()
+  @Type(() => Number)
+  @IsNumber()
+  price: number;
 
   @IsEnum([
     'Work Shuttle',
@@ -39,7 +43,7 @@ export class CreateAdminBookingDto {
   shuttleType: ShuttleType;
 
   @IsArray()
-  @ArrayNotEmpty()
-  @IsEnum(['MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT', 'SUN'], { each: true })
-  availableDays: WeekDay[];
+  // @ArrayNotEmpty()
+  // @IsEnum(['MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT', 'SUN'], { each: true })
+  availableDays: string[];
 }

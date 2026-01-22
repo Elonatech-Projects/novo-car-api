@@ -4,11 +4,11 @@ import {
   IsNotEmpty,
   IsString,
   IsMongoId,
-  IsNumber,
-  Min,
+  //   IsNumber,
+  //   Min,
 } from 'class-validator';
 
-export class CreateUserBookingDto {
+export class anotherUserBookingDto {
   @IsMongoId()
   @IsNotEmpty()
   adminBookingId: string;
@@ -24,16 +24,4 @@ export class CreateUserBookingDto {
   @IsString()
   @IsNotEmpty()
   phone: string;
-
-  @IsString()
-  @IsNotEmpty()
-  pickupTime: string;
-
-  @IsNumber()
-  @Min(1)
-  passengers: number;
-
-  @IsString()
-  @IsNotEmpty()
-  userId: string; // optional if tracking registered users
 }

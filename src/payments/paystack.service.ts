@@ -1,5 +1,3 @@
-// Paystack Service: Manages Paystack payment gateway interactions.
-// paystack.service.ts
 import { Injectable, HttpException, HttpStatus } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import axios, { AxiosError } from 'axios';
@@ -11,7 +9,7 @@ import {
 
 @Injectable()
 export class PaystackService {
-  private readonly secretKey = process.env.PAYSTACK_SECRET_KEY;
+  private readonly secretKey: string;
   private readonly baseUrl = 'https://api.paystack.co';
 
   constructor(private readonly configService: ConfigService) {
@@ -26,9 +24,6 @@ export class PaystackService {
     this.secretKey = key;
   }
 
-  /**
-   * Initialize Paystack transaction
-   */
   async initializeTransaction(data: {
     email: string;
     amount: number;
@@ -46,7 +41,9 @@ export class PaystackService {
           metadata: data.metadata,
           callback_url:
             data.callbackUrl ??
-            `${this.configService.get<string>('FRONTEND_URL')}/booking/verify-payment`,
+            `${this.configService.get<string>(
+              'FRONTEND_URL',
+            )}/booking/verify-payment`,
         },
         {
           headers: {
@@ -62,9 +59,6 @@ export class PaystackService {
     }
   }
 
-  /**
-   * Verify Paystack transaction
-   */
   async verifyTransaction(reference: string): Promise<PaystackVerifyResponse> {
     try {
       const response = await axios.get<PaystackVerifyResponse>(
@@ -82,24 +76,17 @@ export class PaystackService {
     }
   }
 
-  /**
-   * CENTRALIZED AXIOS ERROR HANDLER
-   * - No any
-   * - No unsafe access
-   * - Reusable
-   */
   private handleAxiosError(
     err: unknown,
     fallbackMessage: string,
   ): HttpException {
     if (axios.isAxiosError(err)) {
       const axiosError = err as AxiosError<PaystackErrorResponse>;
-
       const message = axiosError.response?.data?.message ?? fallbackMessage;
-
       return new HttpException(message, HttpStatus.BAD_REQUEST);
     }
 
     return new HttpException(fallbackMessage, HttpStatus.BAD_REQUEST);
   }
 }
+// paystack.service.ts

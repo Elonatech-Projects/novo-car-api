@@ -14,13 +14,13 @@ import { Request } from 'express';
 import { JwtUser } from '../admin/jwt.admin.types';
 import { SearchBookingDto } from './dto/search-booking.dto';
 
-@Controller('booking')
+@Controller('booking/admin')
 export class AdminBookingController {
   constructor(private readonly adminBookingService: AdminBookingService) {}
 
   // ADMIN CREATE BOOKING
   @UseGuards(JwtAdminGuard)
-  @Post('admin/create')
+  @Post('create')
   async createAdminBooking(
     @Req() req: Request & { user: JwtUser },
     @Body() dto: CreateAdminBookingDto,
@@ -31,13 +31,13 @@ export class AdminBookingController {
 
   // GET ALL ADMIN BOOKINGS
   @UseGuards(JwtAdminGuard)
-  @Get('admin/all')
+  @Get('all')
   async getAdminBookings() {
     return this.adminBookingService.getAdminBookings();
   }
 
   //Search for Bookings
-  @Get('search-trips')
+  @Get('trips')
   async getAllBookings(@Query() field: SearchBookingDto) {
     return this.adminBookingService.getAllBooking(field);
   }

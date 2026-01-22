@@ -22,9 +22,22 @@ export interface PaystackVerifyResponse {
     customer: {
       email: string;
     };
+    metadata?: {
+      bookingId?: string;
+      [key: string]: any;
+    };
   };
 }
 
+export interface PaystackMetadata {
+  bookingId?: string;
+  [key: string]: any;
+}
+
+export interface PaystackCustomer {
+  email: string;
+  [key: string]: unknown;
+}
 /**
  * Generic Paystack error response
  * (Paystack usually returns { status, message })
