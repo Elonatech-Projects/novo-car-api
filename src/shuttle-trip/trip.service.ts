@@ -5,7 +5,7 @@ import {
 } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
-import { Trip, TripDocument } from './schema/trip.schema';
+import { ShuttleTrip, TripDocument } from './schema/trip.schema';
 import { CreateTripDto } from './dto/create-trip.dto';
 import { SearchTripDto } from './dto/search-trip.dto';
 import { Admin } from '../admin/schema/admin-schema';
@@ -13,7 +13,7 @@ import { Admin } from '../admin/schema/admin-schema';
 @Injectable()
 export class TripService {
   constructor(
-    @InjectModel(Trip.name) private tripModel: Model<TripDocument>,
+    @InjectModel(ShuttleTrip.name) private tripModel: Model<TripDocument>,
     @InjectModel(Admin.name) private adminModel: Model<Admin>,
   ) {}
 

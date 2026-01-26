@@ -3,7 +3,7 @@ import { MiddlewareConsumer, Module, NestModule } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { MongooseModule } from '@nestjs/mongoose';
 import { AuthModule } from './auth/auth.module';
-import { BookingModule } from './user-booking/booking.module';
+// import { BookingModule } from './user-booking/booking.module';
 import { ShuttleServicesModule } from './shuttle-services/shuttle-services.module';
 import { FleetManagementModule } from './fleet-management/fleet-management.module';
 import { CareerJobsModule } from './career-jobs/career-jobs.module';
@@ -12,12 +12,25 @@ import { RoundTripModule } from './round-trip/round-trip.module';
 import { OneWayModule } from './one-way/one-way.module';
 import { TripModule } from './shuttle-trip/trip.module';
 import { CarRentalsModule } from './car-rentals/car-rentals.module';
-import { AdminBookingModule } from './admin-booking/admin-booking.module';
+// import { AdminBookingModule } from './admin-booking/admin-booking.module';
 import { GuestBookingModule } from './guest-booking/guest-booking.module';
 import { MoServicesModule } from './mo-services/mo-services.module';
-import { BookingsModule } from './bookings/bookings.module';
+// import { BookingsModule } from './bookings/bookings.module';
 import { PaymentsModule } from './payments/payments.module';
 import { RawBodyMiddleware } from './middlewares/raw-body.middleware';
+// import { TripsService } from './trips/trips.service';
+// import { TripsController } from './trips/trips.controller';
+import { TripsModule } from './trips/trips.module';
+// import { BookingService } from './booking/booking.service';
+// import { BookingController } from './booking/booking.controller';
+// import { BookingModule } from './booking/booking.module';
+// import { LegacyBookingService } from './legacy-booking/legacy-booking.service';
+// import { LegacyBookingController } from './legacy-booking/legacy-booking.controller';
+// import { LegacyBookingModule } from './legacy-booking/legacy-booking.module';
+// import { PaystackBookingsController } from './paystack-bookings/paystack-bookings.controller';
+// import { PaystackBookingsService } from './paystack-bookings/paystack-bookings.service';
+import { PaystackBookingsModule } from './paystack-bookings/paystack-bookings.module';
+import { BookingModule } from './booking/booking.module';
 
 @Module({
   imports: [
@@ -47,6 +60,7 @@ import { RawBodyMiddleware } from './middlewares/raw-body.middleware';
 
     // All your feature modules
     AuthModule,
+    // BookingModule,
     BookingModule,
     ShuttleServicesModule,
     FleetManagementModule,
@@ -56,12 +70,19 @@ import { RawBodyMiddleware } from './middlewares/raw-body.middleware';
     OneWayModule,
     TripModule,
     CarRentalsModule,
-    AdminBookingModule,
+    // AdminBookingModule,
     GuestBookingModule,
     MoServicesModule,
-    BookingsModule,
-    PaymentsModule, // This module should contain the controllers
+    // BookingsModule,
+    PaymentsModule,
+    TripsModule,
+    // LegacyBookingModule,
+    PaystackBookingsModule, // This module should contain the controllers
   ],
+  // providers: [PaystackBookingsService],
+  // controllers: [PaystackBookingsController],
+  // providers: [TripsService],
+  // controllers: [TripsController],
   // 🔥 REMOVE controllers and providers from here
   // They should be in their respective modules
 })

@@ -1,19 +1,19 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import { Document } from 'mongoose';
 
-export type TripDocument = Trip & Document;
+export type TripDocument = ShuttleTrip & Document;
 
 export type TripType = 'one-way' | 'round-trip';
 
-@Schema({ timestamps: true })
-export class Trip {
-  @Prop({ required: true })
+@Schema({ timestamps: true, collection: 'shuttle_trips' })
+export class ShuttleTrip {
+  @Prop({ required: false })
   from: string;
 
-  @Prop({ required: true })
+  @Prop({ required: false })
   to: string;
 
-  @Prop({ required: true })
+  @Prop({ required: false })
   departureDate: string; // store as ISO string
 
   @Prop()
@@ -22,8 +22,8 @@ export class Trip {
   @Prop()
   price?: number;
 
-  @Prop({ required: true, enum: ['one-way', 'round-trip'] })
+  @Prop({ required: false, enum: ['one-way', 'round-trip'] })
   tripType?: TripType;
 }
 
-export const TripSchema = SchemaFactory.createForClass(Trip);
+export const TripSchema = SchemaFactory.createForClass(ShuttleTrip);

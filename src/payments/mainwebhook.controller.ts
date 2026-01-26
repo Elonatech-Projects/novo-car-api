@@ -7,8 +7,12 @@ import {
 } from '@nestjs/common';
 import type { Request } from 'express';
 import * as crypto from 'crypto';
-import { BookingsService } from '../bookings/bookings.service';
-import { PaymentMethod, PaymentStatus } from '../bookings/types/payment.type';
+// import { BookingsService } from '../bookings/bookings.service';
+import {
+  PaymentMethod,
+  PaymentStatus,
+} from '../paystack-bookings/types/payment.type';
+import { PaystackBookingsService } from '../paystack-bookings/paystack-bookings.service';
 
 interface PaystackWebhookPayload {
   event: string;
@@ -24,7 +28,7 @@ interface PaystackWebhookPayload {
 
 @Controller('payments/webhook')
 export class PaystackWebhookController {
-  constructor(private readonly bookingsService: BookingsService) {}
+  constructor(private readonly bookingsService: PaystackBookingsService) {}
 
   @Post()
   async handleWebhook(

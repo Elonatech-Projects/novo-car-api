@@ -14,7 +14,7 @@ import { JwtAdminGuard } from '../admin/guards/jwt-auth.guard';
 import { Request } from 'express';
 import { JwtUser } from '../admin/jwt.admin.types';
 
-@Controller('trips')
+@Controller('shuttle-trips')
 export class TripController {
   constructor(private readonly tripService: TripService) {}
 

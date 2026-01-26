@@ -10,8 +10,9 @@ import {
 } from '@nestjs/common';
 import type { Request } from 'express';
 import * as crypto from 'crypto';
-import { BookingsService } from '../bookings/bookings.service';
-import { PaymentMethod, PaymentStatus } from '../bookings/types/payment.type';
+// import { BookingsService } from '../bookings/bookings.service';
+// import { PaymentMethod, PaymentStatus } from '../bookings/types/payment.type';
+import { PaystackBookingsService } from '../paystack-bookings/paystack-bookings.service';
 
 interface RequestWithRawBody extends Request {
   rawBody?: string;
@@ -39,8 +40,8 @@ export class PaystackWebhookController {
   private readonly logger = new Logger(PaystackWebhookController.name);
 
   constructor(
-    @Inject(forwardRef(() => BookingsService))
-    private readonly bookingsService: BookingsService,
+    @Inject(forwardRef(() => PaystackBookingsService))
+    private readonly bookingsService: PaystackBookingsService,
   ) {}
 
   @Post()
@@ -91,15 +92,15 @@ export class PaystackWebhookController {
       throw new BadRequestException('bookingId missing in Paystack metadata');
 
     // Update booking payment
-    await this.bookingsService.updatePayment(bookingId, {
-      method: PaymentMethod.PAYSTACK,
-      amount: payload.data.amount / 100,
-      status: PaymentStatus.SUCCESS,
-      verified: true,
-      reference: payload.data.reference,
-      paystackReference: payload.data.reference,
-      verifiedAt: new Date(),
-    });
+    // await this.bookingsService.updatePayment(bookingId, {
+    //   method: PaymentMethod.PAYSTACK,
+    //   amount: payload.data.amount / 100,
+    //   status: PaymentStatus.SUCCESS,
+    //   verified: true,
+    //   reference: payload.data.reference,
+    //   paystackReference: payload.data.reference,
+    //   verifiedAt: new Date(),
+    // });
 
     return {
       received: true,
