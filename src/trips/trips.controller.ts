@@ -25,9 +25,14 @@ export class TripsController {
 
   // PUBLIC: Search
   @Get('search')
-  searchTrips(@Query(new ValidationPipe()) dto: SearchTripsDto) {
+  searchTrips(@Query() dto: SearchTripsDto) {
     return this.tripsService.searchTrips(dto);
   }
+
+  // @Get('search2')
+  // noSearchTrips(@Query() query: any) {
+  //   return this.tripsService.noSearchTrips(query);
+  // }
 
   // PUBLIC: Get by ID
   @Get(':id')

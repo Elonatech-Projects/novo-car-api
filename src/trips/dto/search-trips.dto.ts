@@ -1,4 +1,5 @@
 // trips/dto/search-trips.dto.ts
+import { Transform } from 'class-transformer';
 import {
   IsOptional,
   IsString,
@@ -17,13 +18,14 @@ export class SearchTripsDto {
 
   @IsOptional()
   @IsString()
-  shuttleType?: string;
+  shuttleType?: string = 'all';
 
   @IsString()
   @IsNotEmpty()
   travelDate: string;
 
   @IsOptional()
+  @Transform(({ value }) => value || '1')
   @IsNumberString()
-  passengers?: string;
+  passengers?: string = '1';
 }

@@ -8,7 +8,6 @@ import { Model } from 'mongoose';
 import { Trip, TripDocument } from './schema/trip.schema';
 import { CreateTripDto } from './dto/create-trip.dto';
 import { UpdateTripDto } from './dto/update-trip.dto';
-import { SearchTripsDto } from './dto/search-trips.dto';
 import { getWeekDay } from '../common/utils/get-weekday.util';
 import { UserBooking } from '../booking/schema/user-booking.schema';
 
@@ -20,7 +19,7 @@ export class TripsService {
     private readonly bookingModel: Model<UserBooking>,
   ) {}
 
-  // CREATE TRIP (Admin)
+  // CREATE TRIP (Admin) - Keep this as is
   async createTrip(adminId: string, createTripDto: CreateTripDto) {
     const existing = await this.tripModel.findOne({
       routeCode: createTripDto.routeCode,
@@ -36,45 +35,75 @@ export class TripsService {
     return { success: true, message: 'Trip created successfully', trip };
   }
 
-  // SEARCH TRIPS (Public)
-  async searchTrips(dto: SearchTripsDto) {
-    const {
-      pickupLocation,
-      dropoffLocation,
-      travelDate,
-      shuttleType,
-      passengers = 1,
-    } = dto;
+  // SEARCH TRIPS (Public) - UPDATED VERSION
+  async searchTrips(query: any) {
+    // Debug logging
+    console.log('🔍 Search query received:', query);
+    console.log('🔍 Query parameters:', {
+      pickupLocation: query.pickupLocation,
+      dropoffLocation: query.dropoffLocation,
+      travelDate: query.travelDate,
+      shuttleType: query.shuttleType,
+      passengers: query.passengers,
+    });
 
+    // Extract and validate required fields
+    const pickupLocation = query.pickupLocation;
+    const dropoffLocation = query.dropoffLocation;
+    const travelDate = query.travelDate;
+    const shuttleType = query.shuttleType || 'all';
+    const passengers = parseInt(query.passengers) || 1;
+
+    // Validate required fields
+    if (!pickupLocation || !dropoffLocation || !travelDate) {
+      throw new BadRequestException(
+        'pickupLocation, dropoffLocation, and travelDate are required',
+      );
+    }
+
+    // Validate travelDate
     const date = new Date(travelDate);
-    if (isNaN(date.getTime()))
-      throw new BadRequestException('Invalid travelDate');
+    if (isNaN(date.getTime())) {
+      throw new BadRequestException('Invalid travelDate format. Use YYYY-MM-DD');
+    }
 
+    // Check if date is in the past
     const today = new Date();
     today.setHours(0, 0, 0, 0);
-    if (date < today)
+    if (date < today) {
       throw new BadRequestException('Cannot search for past dates');
+    }
 
+    // Get weekday from travelDate
     const weekday = getWeekDay(travelDate);
 
-    const query: any = {
+    // Build MongoDB query - FIXED: Changed variable name from 'query' to 'searchQuery'
+    const searchQuery: any = {
       pickupLocation: { $regex: pickupLocation, $options: 'i' },
       dropoffLocation: { $regex: dropoffLocation, $options: 'i' },
       isAvailable: true,
       $or: [
-        {
-          operatingDays: { $in: [weekday] },
-        },
+        { operatingDays: { $in: [weekday] } },
         { specificDates: { $in: [travelDate] } },
       ],
     };
 
-    if (shuttleType && shuttleType !== 'all') query.shuttleType = shuttleType;
+    // Add shuttleType filter if specified
+    if (shuttleType && shuttleType !== 'all') {
+      searchQuery.shuttleType = shuttleType;
+    }
 
-    const trips = await this.tripModel.find(query).lean();
+    console.log('🔍 MongoDB searchQuery:', searchQuery);
 
+    // Find trips
+    const trips = await this.tripModel.find(searchQuery).lean();
+
+    console.log(`🔍 Found ${trips.length} trips matching criteria`);
+
+    // Calculate availability for each trip
     const tripsWithAvailability = await Promise.all(
       trips.map(async (trip) => {
+        // Count booked seats for this trip on the specific date
         const bookedSeats = await this.bookingModel.aggregate([
           {
             $match: {
@@ -85,29 +114,41 @@ export class TripsService {
           },
           { $group: { _id: null, total: { $sum: '$passengers' } } },
         ]);
-        const availableSeats = trip.capacity - (bookedSeats[0]?.total ?? 0);
+
+        const bookedCount = bookedSeats[0]?.total || 0;
+        const availableSeats = trip.capacity - bookedCount;
+        const isAvailable = availableSeats >= passengers;
+
         return {
           ...trip,
           availableSeats,
-          isAvailable: availableSeats >= Number(passengers),
+          isAvailable,
           travelDate,
+          price: trip.basePrice, // Add price alias for frontend compatibility
         };
       }),
     );
 
+    // Filter to only available trips
+    const availableTrips = tripsWithAvailability.filter((t) => t.isAvailable);
+
+    console.log(`✅ ${availableTrips.length} trips available for booking`);
+
     return {
       success: true,
-      count: tripsWithAvailability.filter((t) => t.isAvailable).length,
-      trips: tripsWithAvailability.filter((t) => t.isAvailable),
+      count: availableTrips.length,
+      trips: availableTrips,
     };
   }
 
+  // GET TRIP BY ID
   async getTripById(id: string) {
     const trip = await this.tripModel.findById(id);
     if (!trip) throw new NotFoundException('Trip not found');
     return { success: true, trip };
   }
 
+  // GET ALL TRIPS
   async getAllTrips() {
     const trips = await this.tripModel
       .find()
@@ -115,6 +156,7 @@ export class TripsService {
     return { success: true, trips };
   }
 
+  // UPDATE TRIP
   async updateTrip(id: string, dto: UpdateTripDto) {
     const trip = await this.tripModel.findByIdAndUpdate(id, dto, {
       new: true,
@@ -124,6 +166,7 @@ export class TripsService {
     return { success: true, message: 'Trip updated successfully', trip };
   }
 
+  // DEACTIVATE TRIP
   async deactivateTrip(id: string) {
     const trip = await this.tripModel.findByIdAndUpdate(
       id,
@@ -134,6 +177,7 @@ export class TripsService {
     return { success: true, message: 'Trip deactivated successfully', trip };
   }
 
+  // GET TRIPS BY ADMIN
   async getTripsByAdmin(adminId: string) {
     const trips = await this.tripModel.find({ createdBy: adminId });
     return { success: true, trips };
