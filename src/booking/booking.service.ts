@@ -59,6 +59,10 @@ export class BookingsService {
       passengers: dto.passengers,
       travelDate: dto.travelDate,
       price: totalPrice,
+      nextOfKinName: dto.nextOfKinName || '',
+      nextOfKinPhone: dto.nextOfKinPhone || '',
+      // Optional: Store pickupTime if needed
+      pickupTime: dto.pickupTime || trip.departureTime,
     });
 
     return { success: true, booking };

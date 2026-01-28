@@ -48,6 +48,15 @@ export class UserBooking {
 
   @Prop({ type: Date })
   paidAt?: Date;
+
+  @Prop()
+  nextOfKinName?: string;
+
+  @Prop()
+  nextOfKinPhone?: string;
+
+  @Prop()
+  pickupTime?: string;
 }
 
 export const UserBookingSchema = SchemaFactory.createForClass(UserBooking);

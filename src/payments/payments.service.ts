@@ -97,21 +97,22 @@ export class PaymentsService {
 
   // Payment Webhook
   async handlePaystackWebhook(signature: string, rawBody: Buffer) {
-    const secret = process.env.PAYSTACK_SECRET_KEY;
-    if (!secret) {
-      console.error('[Webhook] Missing PAYSTACK secret key!');
-      throw new BadRequestException('Paystack secret key not defined');
-    }
-    const payload = JSON.stringify({
-      event: 'charge.sucess',
-      data: {
-        reference: 'BOOKING_1769437492110',
-        metadata: { bookingId: '697778d6658bc921f0575e28' },
-      },
-    });
+    // const secret = process.env.PAYSTACK_SECRET_KEY;
+    // if (!secret) {
+    //   console.error('[Webhook] Missing PAYSTACK secret key!');
+    //   throw new BadRequestException('Paystack secret key not defined');
+    // }
+    // const payload = JSON.stringify({
+    //   event: 'charge.sucess',
+    //   data: {
+    //     reference: 'BOOKING_1769437492110',
+    //     metadata: { bookingId: '697778d6658bc921f0575e28' },
+    //   },
+    // });
+    const secret = process.env.PAYSTACK_SECRET_KEY!;
     const hash = crypto
       .createHmac('sha512', secret)
-      .update(payload)
+      .update(rawBody)
       .digest('hex');
     console.log('[Webhook] Computed hash:', hash);
     console.log('[Webhook] Received signature:', signature);
@@ -154,5 +155,4 @@ export class PaymentsService {
 
     return { received: true };
   }
-
 }

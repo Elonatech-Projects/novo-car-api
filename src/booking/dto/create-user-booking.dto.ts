@@ -6,6 +6,7 @@ import {
   Matches,
   IsDateString,
   Min,
+  IsOptional,
 } from 'class-validator';
 
 export class CreateUserBookingDto {
@@ -31,4 +32,16 @@ export class CreateUserBookingDto {
 
   @IsDateString()
   travelDate: string;
+
+  @IsOptional()
+  @IsString()
+  nextOfKinName?: string;
+
+  @IsOptional()
+  @IsString()
+  nextOfKinPhone?: string;
+
+  @IsOptional()
+  @IsString()
+  pickupTime?: string;
 }

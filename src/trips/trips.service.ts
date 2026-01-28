@@ -1,3 +1,4 @@
+// Trips service
 import {
   Injectable,
   BadRequestException,
@@ -64,7 +65,9 @@ export class TripsService {
     // Validate travelDate
     const date = new Date(travelDate);
     if (isNaN(date.getTime())) {
-      throw new BadRequestException('Invalid travelDate format. Use YYYY-MM-DD');
+      throw new BadRequestException(
+        'Invalid travelDate format. Use YYYY-MM-DD',
+      );
     }
 
     // Check if date is in the past
@@ -136,8 +139,10 @@ export class TripsService {
 
     return {
       success: true,
-      count: availableTrips.length,
-      trips: availableTrips,
+      data: {
+        trips: availableTrips,
+        count: availableTrips.length,
+      },
     };
   }
 
