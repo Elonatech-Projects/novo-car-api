@@ -1,3 +1,5 @@
+// Paystack Types
+// src/payments/types/paystack.types.ts
 export interface PaystackInitializeResponse {
   status: boolean;
   message: string;

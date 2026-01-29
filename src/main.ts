@@ -1,20 +1,28 @@
+// main.ts
 import { ValidationPipe } from '@nestjs/common';
 import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
-// import { json } from 'express';
 import * as bodyParser from 'body-parser';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
 
+  // 🔥 RAW BODY FOR WEBHOOK (MUST BE FIRST!)
+  app.use(
+    '/payments/webhook',
+    bodyParser.raw({
+      type: 'application/json',
+      verify: (req: any, res: any, buf: Buffer) => {
+        req.rawBody = buf; // Attach raw buffer to request
+      },
+    }),
+  );
+
+  // Normal JSON for other routes
   app.use(bodyParser.json());
+  app.use(bodyParser.urlencoded({ extended: true }));
 
-  /** ✅ PAYSTACK WEBHOOK RAW BODY (ONLY THIS ROUTE) */
-  app.use('/payments/webhook', bodyParser.raw({ type: 'application/json' }));
-
-  /** ✅ NORMAL JSON PARSER (MUST COME FIRST) */
-
-  /** ✅ CORS */
+  // CORS
   app.enableCors({
     origin: [
       'http://localhost:3000',
@@ -24,16 +32,21 @@ async function bootstrap() {
     credentials: true,
   });
 
-  /** ✅ GLOBAL VALIDATION */
+  // Validation
   app.useGlobalPipes(
     new ValidationPipe({
       whitelist: true,
       transform: true,
+      transformOptions: {
+        enableImplicitConversion: true,
+      },
     }),
   );
 
   const port = process.env.PORT || 4000;
-  console.log(`🚀 Server is running on http://localhost:${port}`);
   await app.listen(port);
+  console.log(`✅ Server running on http://localhost:${port}`);
+  console.log(`📍 Webhook: http://localhost:${port}/payments/webhook`);
 }
+
 bootstrap();

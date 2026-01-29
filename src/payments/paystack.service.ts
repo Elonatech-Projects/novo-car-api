@@ -1,3 +1,5 @@
+// Paystack Service
+//src/payments/paystack.service
 import { Injectable, HttpException, HttpStatus } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import axios, { AxiosError } from 'axios';
