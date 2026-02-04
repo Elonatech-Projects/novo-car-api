@@ -11,6 +11,7 @@ import { CreateTripDto } from './dto/create-trip.dto';
 import { UpdateTripDto } from './dto/update-trip.dto';
 import { getWeekDay } from '../common/utils/get-weekday.util';
 import { UserBooking } from '../booking/schema/user-booking.schema';
+import { SearchTripsDto } from './dto/search-trips.dto';
 
 @Injectable()
 export class TripsService {
@@ -37,77 +38,63 @@ export class TripsService {
   }
 
   // SEARCH TRIPS (Public) - UPDATED VERSION
-  async searchTrips(query: any) {
-    // Debug logging
-    console.log('🔍 Search query received:', query);
-    console.log('🔍 Query parameters:', {
-      pickupLocation: query.pickupLocation,
-      dropoffLocation: query.dropoffLocation,
-      travelDate: query.travelDate,
-      shuttleType: query.shuttleType,
-      passengers: query.passengers,
-    });
+  // TripsService - searchTrips
+  async searchTrips(query: SearchTripsDto) {
+    const {
+      pickupLocation,
+      dropoffLocation,
+      travelDate,
+      shuttleType = 'all',
+      passengers = 1,
+    } = query;
 
-    // Extract and validate required fields
-    const pickupLocation = query.pickupLocation;
-    const dropoffLocation = query.dropoffLocation;
-    const travelDate = query.travelDate;
-    const shuttleType = query.shuttleType || 'all';
-    const passengers = parseInt(query.passengers) || 1;
-
-    // Validate required fields
+    // 1️⃣ Validate required fields
     if (!pickupLocation || !dropoffLocation || !travelDate) {
       throw new BadRequestException(
-        'pickupLocation, dropoffLocation, and travelDate are required',
+        'pickupLocation, dropoffLocation, and travelDate are required'
       );
     }
 
-    // Validate travelDate
-    const date = new Date(travelDate);
-    if (isNaN(date.getTime())) {
+    // 2️⃣ Validate travelDate
+    const travel = new Date(travelDate);
+    if (isNaN(travel.getTime())) {
       throw new BadRequestException(
         'Invalid travelDate format. Use YYYY-MM-DD',
       );
     }
 
-    // Check if date is in the past
     const today = new Date();
     today.setHours(0, 0, 0, 0);
-    if (date < today) {
+    if (travel < today) {
       throw new BadRequestException('Cannot search for past dates');
     }
 
-    // Get weekday from travelDate
+    // 3️⃣ Determine weekday
     const weekday = getWeekDay(travelDate);
 
-    // Build MongoDB query - FIXED: Changed variable name from 'query' to 'searchQuery'
+    // 4️⃣ Build MongoDB search query
     const searchQuery: any = {
       pickupLocation: { $regex: pickupLocation, $options: 'i' },
       dropoffLocation: { $regex: dropoffLocation, $options: 'i' },
       isAvailable: true,
       $or: [
         { operatingDays: { $in: [weekday] } },
+        { specificDates: { $size: 0 } },
         { specificDates: { $in: [travelDate] } },
       ],
     };
 
-    // Add shuttleType filter if specified
-    if (shuttleType && shuttleType !== 'all') {
+    if (shuttleType !== 'all') {
       searchQuery.shuttleType = shuttleType;
     }
 
-    console.log('🔍 MongoDB searchQuery:', searchQuery);
-
-    // Find trips
+    // 5️⃣ Fetch trips
     const trips = await this.tripModel.find(searchQuery).lean();
 
-    console.log(`🔍 Found ${trips.length} trips matching criteria`);
-
-    // Calculate availability for each trip
+    // 6️⃣ Compute availability
     const tripsWithAvailability = await Promise.all(
       trips.map(async (trip) => {
-        // Count booked seats for this trip on the specific date
-        const bookedSeats = await this.bookingModel.aggregate([
+        const bookedSeatsAgg = await this.bookingModel.aggregate([
           {
             $match: {
               tripId: trip._id,
@@ -118,31 +105,25 @@ export class TripsService {
           { $group: { _id: null, total: { $sum: '$passengers' } } },
         ]);
 
-        const bookedCount = bookedSeats[0]?.total || 0;
-        const availableSeats = trip.capacity - bookedCount;
-        const isAvailable = availableSeats >= passengers;
+        const bookedSeats = bookedSeatsAgg[0]?.total ?? 0;
+        const availableSeats = trip.capacity - bookedSeats;
 
         return {
           ...trip,
-          availableSeats,
-          isAvailable,
           travelDate,
-          price: trip.basePrice, // Add price alias for frontend compatibility
+          availableSeats,
+          isAvailable: availableSeats >= passengers,
+          price: trip.basePrice, // frontend compatibility
         };
       }),
     );
 
-    // Filter to only available trips
+    // 7️⃣ Filter only available trips
     const availableTrips = tripsWithAvailability.filter((t) => t.isAvailable);
-
-    console.log(`✅ ${availableTrips.length} trips available for booking`);
 
     return {
       success: true,
-      data: {
-        trips: availableTrips,
-        count: availableTrips.length,
-      },
+      data: { trips: availableTrips, count: availableTrips.length },
     };
   }
 

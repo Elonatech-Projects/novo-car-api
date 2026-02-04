@@ -29,11 +29,6 @@ export class TripsController {
     return this.tripsService.searchTrips(dto);
   }
 
-  // @Get('search2')
-  // noSearchTrips(@Query() query: any) {
-  //   return this.tripsService.noSearchTrips(query);
-  // }
-
   // PUBLIC: Get by ID
   @Get(':id')
   getTrip(@Param('id') id: string) {

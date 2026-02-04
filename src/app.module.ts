@@ -17,6 +17,7 @@ import { PaymentsModule } from './payments/payments.module';
 import { TripsModule } from './trips/trips.module';
 import { PaystackBookingsModule } from './paystack-bookings/paystack-bookings.module';
 import { BookingModule } from './booking/booking.module';
+import { ContactUsModule } from './contact-us/contact-us.module';
 
 @Module({
   imports: [
@@ -59,6 +60,9 @@ import { BookingModule } from './booking/booking.module';
     PaymentsModule,
     TripsModule,
     PaystackBookingsModule,
+    ContactUsModule,
   ],
+  controllers: [],
+  providers: [],
 })
 export class AppModule {} // ← REMOVE implements NestModule and configure method

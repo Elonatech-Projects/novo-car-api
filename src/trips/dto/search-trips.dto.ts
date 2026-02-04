@@ -1,10 +1,11 @@
 // trips/dto/search-trips.dto.ts
-import { Transform } from 'class-transformer';
+import { Type } from 'class-transformer';
 import {
   IsOptional,
   IsString,
-  IsNumberString,
+  IsNumber,
   IsNotEmpty,
+  Min,
 } from 'class-validator';
 
 export class SearchTripsDto {
@@ -25,7 +26,8 @@ export class SearchTripsDto {
   travelDate: string;
 
   @IsOptional()
-  @Transform(({ value }) => value || '1')
-  @IsNumberString()
-  passengers?: string = '1';
+  @Type(() => Number)
+  @IsNumber()
+  @Min(1)
+  passengers?: number = 1;
 }
