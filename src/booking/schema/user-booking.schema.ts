@@ -1,14 +1,9 @@
 // user-booking.schema.ts
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import { Document, Types } from 'mongoose';
+import { BookingStatus } from '../../common/enums/booking-status.enum';
 
 export type UserBookingDocument = UserBooking & Document;
-
-export enum BookingStatus {
-  PENDING_PAYMENT = 'PENDING_PAYMENT',
-  PAID = 'PAID',
-  CANCELLED = 'CANCELLED',
-}
 
 @Schema({ timestamps: true, collection: 'user_bookings' })
 export class UserBooking {

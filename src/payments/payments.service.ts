@@ -20,11 +20,18 @@ import { BadRequestException, Injectable, Logger } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { isValidObjectId, Model } from 'mongoose';
 import { PaystackService } from './paystack.service';
-import {
-  BookingStatus,
-  UserBooking,
-} from '../booking/schema/user-booking.schema';
+import { UserBooking } from '../booking/schema/user-booking.schema';
 import * as crypto from 'crypto';
+import {
+  ShuttleBooking,
+  ShuttleBookingDocument,
+} from '../shuttle-booking/schema/shuttle-booking.schema';
+import { PaystackWebhookEvent } from './types/paystack-webhook.type';
+import { BookingStatus } from '../common/enums/booking-status.enum';
+
+type PaystackMetadata = {
+  bookingId?: string;
+};
 
 @Injectable()
 export class PaymentsService {
@@ -36,6 +43,9 @@ export class PaymentsService {
     @InjectModel(UserBooking.name)
     private readonly bookingModel: Model<UserBooking>,
     private readonly paystackService: PaystackService,
+    // Shuttle-Bookings
+    @InjectModel(ShuttleBooking.name)
+    private readonly shuttleBookingModel: Model<ShuttleBookingDocument>,
   ) {}
 
   /**
@@ -152,7 +162,8 @@ export class PaymentsService {
       }
 
       // ✅ Step 2: Extract booking ID from metadata
-      const bookingId = (paystackResponse.data.metadata as any)?.bookingId;
+      const metadata = paystackResponse.data.metadata as PaystackMetadata;
+      const bookingId = metadata?.bookingId;
 
       if (!bookingId) {
         throw new BadRequestException(
@@ -200,12 +211,15 @@ export class PaymentsService {
         paidAt: booking.paidAt,
       };
     } catch (error) {
+      const message =
+        error instanceof Error ? error.message : 'Unknown error';
+
       this.logger.error(
-        `[Payment Verify] ❌ Error verifying payment:`,
-        error.message,
+        `[Payment Verify] ❌ Error verifying payment: ${message}`,
       );
       throw error;
     }
+
   }
 
   /**
@@ -307,16 +321,12 @@ export class PaymentsService {
     // ═══════════════════════════════════════════════════════════════
     // PARSING - Convert raw body to JavaScript object
     // ═══════════════════════════════════════════════════════════════
-    let event: any;
+    let event: PaystackWebhookEvent;
     try {
-      event = JSON.parse(rawBody.toString('utf8'));
-      this.logger.log('[Webhook] ✅ Webhook payload parsed successfully');
+      event = JSON.parse(rawBody.toString('utf8')) as PaystackWebhookEvent;
     } catch (error) {
-      this.logger.error(
-        '[Webhook] ❌ Failed to parse webhook JSON:',
-        error.message,
-      );
-      return; // Cannot process invalid JSON
+      this.logger.error('[Webhook] Invalid JSON payload');
+      return;
     }
 
     this.logger.log(`[Webhook] 📨 Event type: ${event.event}`);
@@ -339,124 +349,147 @@ export class PaymentsService {
     // EXTRACT BOOKING ID
     // ═══════════════════════════════════════════════════════════════
     // The booking ID is stored in the metadata we sent during initialization
-    const bookingId = event?.data?.metadata?.bookingId;
+    const { source, sourceId } = event?.data?.metadata ?? {};
 
-    if (!bookingId) {
-      this.logger.error('[Webhook] ❌ Missing bookingId in webhook metadata');
-      this.logger.error(
-        `[Webhook] Received metadata: ${JSON.stringify(event?.data?.metadata)}`,
-      );
-      return; // Cannot process without booking ID
+    if (!source || !sourceId) {
+      this.logger.warn('[Webhook] Missing payment source metadata');
+      return;
     }
 
-    this.logger.log(
-      `[Webhook] 🔍 Processing payment for booking: ${bookingId}`,
-    );
+    switch (source) {
+      case 'booking':
+        await this.handleBookingPayment(sourceId, event);
+        break;
 
-    // ═══════════════════════════════════════════════════════════════
-    // FETCH BOOKING FROM DATABASE
-    // ═══════════════════════════════════════════════════════════════
-    const booking = await this.bookingModel.findById(bookingId);
+      case 'shuttle-booking':
+        await this.handleShuttleBookingPayment(sourceId, event);
+        break;
 
-    if (!booking) {
-      this.logger.error(
-        `[Webhook] ❌ Booking not found in database: ${bookingId}`,
-      );
-      return; // Cannot update non-existent booking
+      default:
+        this.logger.warn(`[Webhook] Unknown payment source: ${source}`);
     }
-
-    this.logger.log(
-      `[Webhook] ✅ Booking found - Current status: ${booking.status}`,
-    );
-
-    // ═══════════════════════════════════════════════════════════════
-    // IDEMPOTENCY CHECK (Very Important!)
-    // ═══════════════════════════════════════════════════════════════
-    // Paystack may send the same webhook multiple times (network issues, retries)
-    // We must ensure we only process each payment ONCE!
-    // If booking is already PAID, we skip processing
-    if (booking.status === BookingStatus.PAID) {
-      this.logger.log(
-        `[Webhook] ℹ️ Booking ${bookingId} already marked as PAID - skipping duplicate processing`,
-      );
-      return; // Already processed, nothing to do
-    }
-
-    // ═══════════════════════════════════════════════════════════════
-    // AMOUNT VERIFICATION (Security Check)
-    // ═══════════════════════════════════════════════════════════════
-    // Verify that the amount paid matches the booking price
-    // This prevents issues where wrong amount was paid
-    const expectedAmount = Number(booking.price) * 100; // Convert to kobo
-    const paidAmount = event?.data?.amount; // Already in kobo from Paystack
-
-    this.logger.log(
-      `[Webhook] 💰 Amount verification - Expected: ₦${expectedAmount / 100} (${expectedAmount} kobo), Received: ₦${paidAmount / 100} (${paidAmount} kobo)`,
-    );
-
-    if (paidAmount !== expectedAmount) {
-      this.logger.error('[Webhook] ❌ AMOUNT MISMATCH!');
-      this.logger.error(
-        `Expected ${expectedAmount} kobo but received ${paidAmount} kobo`,
-      );
-      this.logger.error('This payment may need manual review!');
-      // TODO: In production, you might want to:
-      // 1. Mark booking as "DISPUTED" or "AMOUNT_MISMATCH"
-      // 2. Send alert to admin
-      // 3. Store the payment data for manual reconciliation
-      return; // Do not mark as paid if amount is wrong
-    }
-
-    // ═══════════════════════════════════════════════════════════════
-    // UPDATE BOOKING STATUS - Mark as PAID
-    // ═══════════════════════════════════════════════════════════════
-    // At this point:
-    // ✅ Signature is valid (webhook is from Paystack)
-    // ✅ Event type is payment success
-    // ✅ Booking exists in database
-    // ✅ Booking is not already paid (idempotency check passed)
-    // ✅ Amount matches what was expected
-    //
-    // So we can safely mark the booking as PAID!
-
-    booking.status = BookingStatus.PAID;
-    booking.paidAt = new Date(event.data.paid_at ?? Date.now());
-    await booking.save();
 
     // ═══════════════════════════════════════════════════════════════
     // SUCCESS LOGGING
     // ═══════════════════════════════════════════════════════════════
-    this.logger.log(
-      `[Webhook] 🎉 SUCCESS! Booking ${bookingId} marked as PAID`,
-    );
-    this.logger.log(`[Webhook] 💳 Payment Reference: ${event.data.reference}`);
-    this.logger.log(
-      `[Webhook] 💰 Amount Paid: ₦${paidAmount / 100} (${paidAmount} kobo)`,
-    );
-    this.logger.log(`[Webhook] ⏰ Paid At: ${booking.paidAt}`);
-    this.logger.log(
-      `[Webhook] 👤 Customer: ${booking.fullName} (${booking.email})`,
-    );
+
     this.logger.log('═══════════════════════════════════════\n');
 
     // ═══════════════════════════════════════════════════════════════
     // OPTIONAL: POST-PAYMENT ACTIONS
     // ═══════════════════════════════════════════════════════════════
     // After successfully marking as paid, you can:
-    // 
+    //
     // 1. Send confirmation email to customer
     //    await this.emailService.sendBookingConfirmation(booking);
-    // 
+    //
     // 2. Send SMS notification
     //    await this.smsService.sendPaymentConfirmation(booking);
-    // 
-    // 3. Update analytics/metrics
-    //    await this.analyticsService.trackSuccessfulPayment(booking);
-    // 
-    // 4. Trigger other business logic
-    //    await this.notificationService.notifyAdmin(booking);
-    // 
+    //
+    //
     // NOTE: These should be async/background jobs to avoid blocking
     //       the webhook response. Use queues (Bull, BeeQueue) for this!
   }
+
+  // ShuttleBooking
+  /**
+   * Initialize payment for shuttle booking
+   * Uses SAME Paystack flow as normal bookings
+   */
+  async initializeShuttleBookingPayment(shuttleBookingId: string) {
+    if (!isValidObjectId(shuttleBookingId)) {
+      throw new BadRequestException('Invalid shuttle booking ID');
+    }
+
+    const booking = await this.shuttleBookingModel.findById(shuttleBookingId);
+
+    if (!booking) {
+      throw new BadRequestException('Shuttle booking not found');
+    }
+
+    if (!booking.email) {
+      throw new BadRequestException('Booking email is missing');
+    }
+
+    if (booking.status === BookingStatus.PAID) {
+      throw new BadRequestException('This shuttle booking is already paid');
+    }
+
+    const reference = `NOVO-SHUTTLE-${shuttleBookingId.slice(-6)}-${Date.now()}`;
+
+    if (typeof booking.totalPrice !== 'number') {
+      throw new BadRequestException('Shuttle booking price not calculated yet');
+    }
+
+    const response = await this.paystackService.initializeTransaction({
+      email: booking.email,
+      amount: booking.totalPrice * 100, // ✅ now guaranteed number
+      reference,
+      metadata: {
+        source: 'shuttle-booking',
+        sourceId: booking._id.toString(),
+      },
+    });
+
+    booking.paymentReference = reference;
+    await booking.save();
+
+    return {
+      success: true,
+      authorizationUrl: response.data.authorization_url,
+      reference,
+    };
+  }
+
+  private async handleShuttleBookingPayment(
+    shuttleBookingId: string,
+    event: PaystackWebhookEvent,
+  ) {
+    const booking = await this.shuttleBookingModel.findById(shuttleBookingId);
+
+    if (!booking || booking.status === BookingStatus.PAID) return;
+    if (typeof booking.totalPrice !== 'number') {
+      this.logger.error('[Webhook] Shuttle booking missing totalPrice');
+      return;
+    }
+
+    const expectedAmount = booking.totalPrice * 100;
+
+    const paidAmount = event.data.amount;
+
+    if (paidAmount !== expectedAmount) {
+      this.logger.error('[Webhook] Shuttle amount mismatch');
+      return;
+    }
+
+    booking.status = BookingStatus.PAID;
+    booking.paidAt = new Date(event.data.paid_at ?? Date.now());
+
+    await booking.save();
+
+    this.logger.log(
+      `[Webhook] Shuttle booking ${shuttleBookingId} marked as PAID`,
+    );
+  }
+  private async handleBookingPayment(bookingId: string, event: PaystackWebhookEvent) {
+    const booking = await this.bookingModel.findById(bookingId);
+
+    if (!booking || booking.status === BookingStatus.PAID) return;
+
+    const expectedAmount = Number(booking.price) * 100;
+    const paidAmount = event.data.amount;
+
+    if (paidAmount !== expectedAmount) {
+      this.logger.error('[Webhook] Booking amount mismatch');
+      return;
+    }
+
+    booking.status = BookingStatus.PAID;
+    booking.paidAt = new Date(event.data.paid_at ?? Date.now());
+
+    await booking.save();
+
+    this.logger.log(`[Webhook] Booking ${bookingId} marked as PAID`);
+  }
+
 }

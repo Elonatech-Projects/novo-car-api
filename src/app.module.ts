@@ -18,6 +18,9 @@ import { TripsModule } from './trips/trips.module';
 import { PaystackBookingsModule } from './paystack-bookings/paystack-bookings.module';
 import { BookingModule } from './booking/booking.module';
 import { ContactUsModule } from './contact-us/contact-us.module';
+import { ShuttleBookingModule } from './shuttle-booking/shuttle-booking.module';
+import { PricingModule } from './pricing/pricing.module';
+import { MapsModule } from './maps/maps.module';
 
 @Module({
   imports: [
@@ -61,6 +64,9 @@ import { ContactUsModule } from './contact-us/contact-us.module';
     TripsModule,
     PaystackBookingsModule,
     ContactUsModule,
+    ShuttleBookingModule,
+    PricingModule,
+    MapsModule,
   ],
   controllers: [],
   providers: [],

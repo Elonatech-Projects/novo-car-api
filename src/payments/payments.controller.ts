@@ -11,7 +11,6 @@ import {
   Logger,
 } from '@nestjs/common';
 import { PaymentsService } from './payments.service';
-import { Request } from 'express';
 
 @Controller('payments')
 export class PaymentsController {
@@ -61,5 +60,15 @@ export class PaymentsController {
       this.logger.error(`[Webhook] ❌ Error:`, error.message);
       return { received: true }; // Still return 200
     }
+  }
+
+  // ShuttleBooking Route
+  @Post('initialize/shuttle/:shuttleBookingId')
+  async initializeShuttlePayment(
+    @Param('shuttleBookingId') shuttleBookingId: string,
+  ) {
+    return this.paymentsService.initializeShuttleBookingPayment(
+      shuttleBookingId,
+    );
   }
 }
