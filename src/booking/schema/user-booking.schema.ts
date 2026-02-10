@@ -52,6 +52,9 @@ export class UserBooking {
 
   @Prop()
   pickupTime?: string;
+
+  @Prop({ default: false, type: Boolean })
+  refundFinalized?: boolean;
 }
 
 export const UserBookingSchema = SchemaFactory.createForClass(UserBooking);

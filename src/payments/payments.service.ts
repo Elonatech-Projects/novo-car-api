@@ -28,9 +28,12 @@ import {
 } from '../shuttle-booking/schema/shuttle-booking.schema';
 import { PaystackWebhookEvent } from './types/paystack-webhook.type';
 import { BookingStatus } from '../common/enums/booking-status.enum';
+import { NotificationService } from '../notifications/notifications.service';
 
 type PaystackMetadata = {
   bookingId?: string;
+  source?: 'booking' | 'shuttle-booking';
+  sourceId?: string;
 };
 
 @Injectable()
@@ -42,10 +45,11 @@ export class PaymentsService {
   constructor(
     @InjectModel(UserBooking.name)
     private readonly bookingModel: Model<UserBooking>,
-    private readonly paystackService: PaystackService,
+    private readonly paystackService: PaystackService, // Paystack Service
     // Shuttle-Bookings
     @InjectModel(ShuttleBooking.name)
     private readonly shuttleBookingModel: Model<ShuttleBookingDocument>,
+    private readonly notificationService: NotificationService,
   ) {}
 
   /**
@@ -96,16 +100,26 @@ export class PaymentsService {
     const reference = `NOVO-${bookingId.substring(
       bookingId.length - 8,
     )}-${Date.now()}`;
+    // ✅ Step 4: Resolve payable amount safely
+    const amountNaira = Number(booking.price);
 
-    // ✅ Step 4: Call Paystack API to initialize transaction
+    if (!Number.isFinite(amountNaira) || amountNaira <= 0) {
+      throw new BadRequestException('Invalid booking price');
+    }
+
+    // Convert to kobo for Paystack
+    const amountKobo = amountNaira * 100;
+
+    // ✅ Step 5: Call Paystack API to initialize transaction
     // Paystack go return authorization URL wey user go use pay
     const paystackResponse = await this.paystackService.initializeTransaction({
       email: booking.email,
-      amount: Number(booking.price) * 100, // Convert to kobo (NGN × 100)
+      amount: amountKobo,
       reference,
       metadata: {
-        bookingId: booking._id.toString(),
-        customData: 'Novo Shuttle Booking',
+        source: 'booking',
+        sourceId: booking._id.toString(),
+        // customData: 'Novo Shuttle Booking',
         passengers: booking.passengers,
         travelDate: booking.travelDate,
       },
@@ -163,7 +177,12 @@ export class PaymentsService {
 
       // ✅ Step 2: Extract booking ID from metadata
       const metadata = paystackResponse.data.metadata as PaystackMetadata;
-      const bookingId = metadata?.bookingId;
+
+      if (metadata?.source !== 'booking' || !metadata.sourceId) {
+        throw new BadRequestException('Invalid payment metadata');
+      }
+
+      const bookingId = metadata.sourceId;
 
       if (!bookingId) {
         throw new BadRequestException(
@@ -211,15 +230,13 @@ export class PaymentsService {
         paidAt: booking.paidAt,
       };
     } catch (error) {
-      const message =
-        error instanceof Error ? error.message : 'Unknown error';
+      const message = error instanceof Error ? error.message : 'Unknown error';
 
       this.logger.error(
         `[Payment Verify] ❌ Error verifying payment: ${message}`,
       );
       throw error;
     }
-
   }
 
   /**
@@ -324,8 +341,8 @@ export class PaymentsService {
     let event: PaystackWebhookEvent;
     try {
       event = JSON.parse(rawBody.toString('utf8')) as PaystackWebhookEvent;
-    } catch (error) {
-      this.logger.error('[Webhook] Invalid JSON payload');
+    } catch (error: unknown) {
+      this.logger.error('[Webhook] Invalid JSON payload', error);
       return;
     }
 
@@ -366,7 +383,7 @@ export class PaymentsService {
         break;
 
       default:
-        this.logger.warn(`[Webhook] Unknown payment source: ${source}`);
+        this.logger.warn(`[Webhook] Unknown payment source:`, source);
     }
 
     // ═══════════════════════════════════════════════════════════════
@@ -389,6 +406,12 @@ export class PaymentsService {
     //
     // NOTE: These should be async/background jobs to avoid blocking
     //       the webhook response. Use queues (Bull, BeeQueue) for this!
+    const refundEvents = ['refund.processed', 'refund.failed'];
+
+    if (refundEvents.includes(event.event)) {
+      await this.handleRefundWebhook(event);
+      return;
+    }
   }
 
   // ShuttleBooking
@@ -441,55 +464,326 @@ export class PaymentsService {
     };
   }
 
+  async requestRefund(
+    source: 'booking' | 'shuttle-booking',
+    sourceId: string,
+    reason?: string,
+  ) {
+    if (!isValidObjectId(sourceId)) {
+      throw new BadRequestException('Invalid booking ID');
+    }
+
+    if (source === 'booking') {
+      const booking = await this.bookingModel.findById(sourceId);
+
+      if (!booking) throw new BadRequestException('Booking not found');
+      if (booking.status !== BookingStatus.PAID) {
+        throw new BadRequestException('Only PAID bookings can be refunded');
+      }
+      if (!booking.paymentReference) {
+        throw new BadRequestException('Missing payment reference');
+      }
+
+      booking.status = BookingStatus.REFUND_REQUESTED;
+      await booking.save();
+
+      await this.paystackService.refundTransaction({
+        reference: booking.paymentReference,
+      });
+
+      await this.notificationService.refundInitiated({
+        source: 'booking',
+        emailData: {
+          type: 'REFUND_INITIATED',
+          to: booking.email,
+          subject: 'Refund Initiated – Novo',
+          data: {
+            reference: booking.paymentReference,
+            reason,
+          },
+        },
+      });
+
+      return { success: true };
+    }
+
+    // ───────────────────────────────────────
+
+    const shuttleBooking = await this.shuttleBookingModel.findById(sourceId);
+
+    if (!shuttleBooking) {
+      throw new BadRequestException('Shuttle booking not found');
+    }
+    if (shuttleBooking.status !== BookingStatus.PAID) {
+      throw new BadRequestException('Only PAID bookings can be refunded');
+    }
+    if (!shuttleBooking.paymentReference) {
+      throw new BadRequestException('Missing payment reference');
+    }
+
+    shuttleBooking.status = BookingStatus.REFUND_PENDING;
+    await shuttleBooking.save();
+
+    await this.paystackService.refundTransaction({
+      reference: shuttleBooking.paymentReference,
+    });
+
+    await this.notificationService.refundInitiated({
+      source: 'shuttle-booking',
+      emailData: {
+        type: 'REFUND_INITIATED',
+        to: shuttleBooking.email,
+        subject: 'Refund Initiated – Novo Shuttle',
+        data: {
+          reference: shuttleBooking.paymentReference,
+          reason,
+        },
+      },
+    });
+
+    return { success: true };
+  }
+
   private async handleShuttleBookingPayment(
     shuttleBookingId: string,
     event: PaystackWebhookEvent,
   ) {
     const booking = await this.shuttleBookingModel.findById(shuttleBookingId);
-
-    if (!booking || booking.status === BookingStatus.PAID) return;
-    if (typeof booking.totalPrice !== 'number') {
-      this.logger.error('[Webhook] Shuttle booking missing totalPrice');
+    if (
+      !booking ||
+      booking.status === BookingStatus.PAID ||
+      booking.status === BookingStatus.REFUND_PENDING ||
+      booking.status === BookingStatus.REFUNDED
+    ) {
       return;
     }
 
     const expectedAmount = booking.totalPrice * 100;
-
-    const paidAmount = event.data.amount;
-
-    if (paidAmount !== expectedAmount) {
-      this.logger.error('[Webhook] Shuttle amount mismatch');
-      return;
-    }
+    if (event.data.amount !== expectedAmount) return;
 
     booking.status = BookingStatus.PAID;
     booking.paidAt = new Date(event.data.paid_at ?? Date.now());
-
     await booking.save();
 
-    this.logger.log(
-      `[Webhook] Shuttle booking ${shuttleBookingId} marked as PAID`,
-    );
+    await this.notificationService.paymentConfirmed({
+      source: 'shuttle-booking',
+      emailData: {
+        type: 'SHUTTLE_CONFIRMATION',
+        to: booking.email,
+        subject: 'Payment Confirmed – Novo Shuttle',
+        data: {
+          reference: booking.bookingReference,
+          shuttleType: booking.shuttleType,
+          pickup: booking.pickupLocation,
+          dropoff: booking.dropoffLocation,
+          date: booking.bookingDate,
+          time: booking.pickupTime,
+          distanceKm: booking.distanceKm,
+          amountPaid: booking.totalPrice,
+        },
+      },
+    });
   }
-  private async handleBookingPayment(bookingId: string, event: PaystackWebhookEvent) {
-    const booking = await this.bookingModel.findById(bookingId);
 
-    if (!booking || booking.status === BookingStatus.PAID) return;
+  private async handleBookingPayment(
+    bookingId: string,
+    event: PaystackWebhookEvent,
+  ) {
+    const booking = await this.bookingModel.findById(bookingId);
+    if (
+      !booking ||
+      booking.status === BookingStatus.PAID ||
+      booking.status === BookingStatus.REFUND_PENDING ||
+      booking.status === BookingStatus.REFUNDED
+    ) {
+      return;
+    }
 
     const expectedAmount = Number(booking.price) * 100;
-    const paidAmount = event.data.amount;
-
-    if (paidAmount !== expectedAmount) {
-      this.logger.error('[Webhook] Booking amount mismatch');
-      return;
-    }
+    if (event.data.amount !== expectedAmount) return;
 
     booking.status = BookingStatus.PAID;
     booking.paidAt = new Date(event.data.paid_at ?? Date.now());
-
     await booking.save();
 
-    this.logger.log(`[Webhook] Booking ${bookingId} marked as PAID`);
+    await this.notificationService.paymentConfirmed({
+      source: 'booking',
+      emailData: {
+        type: 'BOOKING_CONFIRMATION',
+        to: booking.email,
+        subject: 'Payment Confirmed – Novo',
+        data: {
+          reference: booking.paymentReference,
+          route: 'Trip Booking',
+          travelDate: booking.travelDate,
+          passengers: booking.passengers,
+          amountPaid: booking.price,
+        },
+      },
+    });
   }
 
+  private async handleRefundWebhook(event: PaystackWebhookEvent) {
+    const reference = event?.data?.reference;
+    if (!reference) return;
+
+    const booking =
+      (await this.bookingModel.findOne({ paymentReference: reference })) ??
+      (await this.shuttleBookingModel.findOne({ paymentReference: reference }));
+
+    if (!booking) return;
+
+    // 🛑 IDEMPOTENCY GUARD
+    if (booking.refundFinalized === true) {
+      this.logger.log(
+        `[Refund Webhook] 🔁 Duplicate webhook ignored (${booking._id.toString()})`,
+      );
+      return;
+    }
+
+    if (booking.status !== BookingStatus.REFUND_PENDING) return;
+
+    if (event.event === 'refund.processed') {
+      booking.status = BookingStatus.REFUNDED;
+      booking.refundFinalized = true;
+      await booking.save();
+
+      await this.notificationService.refundCompleted({
+        source: 'shuttleType' in booking ? 'shuttle-booking' : 'booking',
+        emailData: {
+          type: 'REFUND_COMPLETED',
+          to: booking.email,
+          subject: 'Refund Completed – Novo',
+          data: {
+            reference,
+            amount:
+              'totalPrice' in booking ? booking.totalPrice : booking.price,
+          },
+        },
+      });
+
+      return;
+    }
+
+    if (event.event === 'refund.failed') {
+      booking.status = BookingStatus.PAID;
+      booking.refundFinalized = true;
+      await booking.save();
+    }
+  }
+
+  async verifyRefundStatus(reference: string) {
+    this.logger.log(`[Refund Verify] 🔍 Verifying refund for ${reference}`);
+
+    // 1️⃣ Find booking (normal or shuttle)
+    const booking =
+      (await this.bookingModel.findOne({ paymentReference: reference })) ??
+      (await this.shuttleBookingModel.findOne({ paymentReference: reference }));
+
+    if (!booking) {
+      throw new BadRequestException('Booking not found for refund reference');
+    }
+
+    // Only reconcile pending refunds
+    if (booking.status !== BookingStatus.REFUND_PENDING) {
+      return {
+        success: true,
+        message: 'Booking not in REFUND_PENDING state',
+        status: booking.status,
+      };
+    }
+
+    // 2️⃣ Ask Paystack directly
+    const refund = await this.paystackService.verifyRefund(reference);
+
+    if (!refund) {
+      throw new BadRequestException('Invalid refund response from Paystack');
+    }
+
+    const refundStatus = refund.status;
+
+    // 3️⃣ Act based on Paystack truth
+    if (refundStatus === 'processed') {
+      booking.status = BookingStatus.REFUNDED;
+      await booking.save();
+      const amountPaid =
+        'totalPrice' in booking ? booking.totalPrice : booking.price;
+      await this.notificationService.refundCompleted({
+        source: 'shuttleType' in booking ? 'shuttle-booking' : 'booking',
+        emailData: {
+          type: 'REFUND_COMPLETED',
+          to: booking.email,
+          subject: 'Refund Completed – Novo',
+          data: {
+            reference,
+            amount: amountPaid,
+          },
+        },
+      });
+
+      this.logger.log(
+        `[Refund Verify] ✅ Booking ${booking._id.toString()} marked as REFUNDED`,
+      );
+
+      return {
+        success: true,
+        status: BookingStatus.REFUNDED,
+      };
+    }
+
+    if (refundStatus === 'failed') {
+      booking.status = BookingStatus.PAID; // rollback
+      await booking.save();
+
+      this.logger.error(
+        `[Refund Verify] ❌ Refund failed for booking ${booking._id.toString()}`,
+      );
+
+      return {
+        success: false,
+        status: 'failed',
+      };
+    }
+
+    // still pending
+    return {
+      success: true,
+      status: refundStatus,
+    };
+  }
+
+  async approveRefund(bookingId: string) {
+    if (!isValidObjectId(bookingId)) {
+      throw new BadRequestException('Invalid booking ID');
+    }
+
+    const booking =
+      (await this.bookingModel.findById(bookingId)) ??
+      (await this.shuttleBookingModel.findById(bookingId));
+
+    if (!booking) {
+      throw new BadRequestException('Booking not found');
+    }
+
+    if (booking.status !== BookingStatus.REFUND_REQUESTED) {
+      throw new BadRequestException('Refund not requested');
+    }
+
+    if (!booking.paymentReference) {
+      throw new BadRequestException('Missing payment reference');
+    }
+
+    booking.status = BookingStatus.REFUND_REQUESTED;
+    await booking.save();
+
+    await this.paystackService.refundTransaction({
+      reference: booking.paymentReference,
+    });
+
+    return {
+      success: true,
+      message: 'Refund Approved',
+    };
+  }
+  // Email/SMS
 }

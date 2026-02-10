@@ -12,8 +12,8 @@ const webhookPayload = {
   data: {
     id: 123456789,
     status: 'success',
-    reference: 'NOVO-1eb262c1-1769769354893', // ← Use actual booking reference
-    amount: 2500000, // In kobo (50,000 NGN)
+    reference: 'NOVO-17456095', // ← Use actual booking reference
+    amount: 1997500, // In kobo (50,000 NGN)
     currency: 'NGN',
     paid_at: '2026-01-29T15:35:00.000Z',
     customer: {
@@ -22,7 +22,7 @@ const webhookPayload = {
       last_name: 'Doe'
     },
     metadata: {
-      bookingId: '697c88bbf8466a871eb262c1', // ← Use actual booking ID
+      bookingId: '698b0110efc504d6175e912f', // ← Use actual booking ID
       customData: 'Novo Shuttle Booking'
     }
   }

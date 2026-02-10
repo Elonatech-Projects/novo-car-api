@@ -10,6 +10,7 @@ import { ShuttleType } from './enums';
 import { BookingStatus } from '../common/enums/booking-status.enum';
 import { PricingService } from '../pricing/pricing.service';
 import { MapsService } from '../maps/maps.service';
+import { getSurgeMultiplier } from '../pricing/surge/surge.util';
 
 @Injectable()
 export class ShuttleBookingService {
@@ -21,6 +22,10 @@ export class ShuttleBookingService {
   ) {}
 
   async create(dto: CreateShuttleBookingDto, userId?: string) {
+    // Added Surge Multiplier
+    const pickupDateTime = new Date(`${dto.bookingDate}T${dto.pickupTime}`);
+
+    const surgeMultiplier = getSurgeMultiplier(pickupDateTime);
     // 1️⃣ Validate fields
     this.validateByType(dto);
 
@@ -36,6 +41,7 @@ export class ShuttleBookingService {
       passengers: dto.numberOfPassengers,
       numberOfCars: dto.numberOfCars,
       distanceKm,
+      surgeMultiplier, //Added Surge Multiplier here
     });
 
     // 4️⃣ Generate reference

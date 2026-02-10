@@ -37,3 +37,14 @@ export interface PaystackErrorResponse {
   status: boolean;
   message: string;
 }
+
+export interface PaystackRefundResponse {
+  status: boolean;
+  message: string;
+  data: {
+    transaction: {
+      reference: string;
+    };
+    status: 'pending' | 'processed' | 'failed';
+  };
+}

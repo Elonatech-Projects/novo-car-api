@@ -1,20 +1,26 @@
 // Paystack Service
 //src/payments/paystack.service
-import { Injectable, HttpException, HttpStatus } from '@nestjs/common';
+// import { HttpService } from '@nestjs/axios';
+import { Injectable, HttpException, HttpStatus, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import axios, { AxiosError } from 'axios';
 import {
   PaystackInitializeResponse,
   PaystackVerifyResponse,
   PaystackErrorResponse,
+  PaystackRefundResponse,
 } from './types/paystack.types';
 
 @Injectable()
 export class PaystackService {
+  private readonly logger = new Logger(PaystackService.name);
   private readonly secretKey: string;
   private readonly baseUrl = 'https://api.paystack.co';
 
-  constructor(private readonly configService: ConfigService) {
+  constructor(
+    private readonly configService: ConfigService,
+    // private readonly httpService: HttpService,
+  ) {
     const key = this.configService.get<string>('PAYSTACK_SECRET_KEY');
 
     if (!key) {
@@ -26,6 +32,7 @@ export class PaystackService {
     this.secretKey = key;
   }
 
+  //initialize Transaction
   async initializeTransaction(data: {
     email: string;
     amount: number;
@@ -78,6 +85,31 @@ export class PaystackService {
     }
   }
 
+  async refundTransaction(payload: {
+    reference: string;
+    amount?: number; // kobo
+  }): Promise<PaystackRefundResponse> {
+    try {
+      const response = await axios.post<PaystackRefundResponse>(
+        `${this.baseUrl}/refund`,
+        {
+          transaction: payload.reference,
+          amount: payload.amount,
+        },
+        {
+          headers: {
+            Authorization: `Bearer ${this.secretKey}`,
+            'Content-Type': 'application/json',
+          },
+        },
+      );
+
+      return response.data;
+    } catch (err: unknown) {
+      throw this.handleAxiosError(err, 'Refund request failed');
+    }
+  }
+
   private handleAxiosError(
     err: unknown,
     fallbackMessage: string,
@@ -89,6 +121,24 @@ export class PaystackService {
     }
 
     return new HttpException(fallbackMessage, HttpStatus.BAD_REQUEST);
+  }
+  async verifyRefund(reference: string): Promise<{
+    status: 'pending' | 'failed' | 'processed';
+  }> {
+    try {
+      const response = await axios.get<{
+        status: boolean;
+        data: { status: 'pending' | 'failed' | 'processed' };
+      }>(`${this.baseUrl}/refund/${reference}`, {
+        headers: {
+          Authorization: `Bearer ${this.secretKey}`,
+        },
+      });
+
+      return response.data.data;
+    } catch (err: unknown) {
+      throw this.handleAxiosError(err, 'Refund verification failed');
+    }
   }
 }
 // paystack.service.ts

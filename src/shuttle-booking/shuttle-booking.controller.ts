@@ -41,7 +41,7 @@ export class ShuttleBookingController {
    * List bookings for logged-in user
    */
   @Get('my')
-  async listMine(@Req() req: AuthRequest ) {
+  async listMine(@Req() req: AuthRequest) {
     return this.service.listByUser(req.user?.id);
   }
 

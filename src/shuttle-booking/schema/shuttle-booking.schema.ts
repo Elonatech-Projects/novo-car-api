@@ -133,6 +133,9 @@ export class ShuttleBooking {
 
   @Prop()
   distanceKm?: number;
+
+  @Prop({ default: false, type: Boolean })
+  refundFinalized?: boolean;
 }
 
 export type ShuttleBookingDocument = ShuttleBooking & Document;
