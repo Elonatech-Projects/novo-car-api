@@ -13,6 +13,8 @@ import {
 } from '../shuttle-booking/schema/shuttle-booking.schema';
 // import { NotificationService } from '../notifications/notifications.service';
 import { NotificationsModule } from '../notifications/notifications.module';
+// import { AuditService } from '../audit/audit.service';
+import { AuditModule } from '../audit/audit.module';
 // import { HttpModule } from '@nestjs/axios';
 // import { AnotherBooking, AnotherBookingSchema } from '../admin-booking/schema/another-booking.schema';
 
@@ -20,6 +22,7 @@ import { NotificationsModule } from '../notifications/notifications.module';
   imports: [
     // HttpModule,
     NotificationsModule,
+    AuditModule,
     MongooseModule.forFeature([
       { name: UserBooking.name, schema: UserBookingSchema },
       { name: ShuttleBooking.name, schema: ShuttleBookingSchema },

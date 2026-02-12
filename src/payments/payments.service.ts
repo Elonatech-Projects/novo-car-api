@@ -29,6 +29,7 @@ import {
 import { PaystackWebhookEvent } from './types/paystack-webhook.type';
 import { BookingStatus } from '../common/enums/booking-status.enum';
 import { NotificationService } from '../notifications/notifications.service';
+import { AuditService } from '../audit/audit.service';
 
 type PaystackMetadata = {
   bookingId?: string;
@@ -50,6 +51,7 @@ export class PaymentsService {
     @InjectModel(ShuttleBooking.name)
     private readonly shuttleBookingModel: Model<ShuttleBookingDocument>,
     private readonly notificationService: NotificationService,
+    private readonly auditService: AuditService,
   ) {}
 
   /**
@@ -131,9 +133,16 @@ export class PaymentsService {
     await booking.save();
 
     // Log for monitoring
-    this.logger.log(
-      `[Payment Init] ✅ Booking ${bookingId} initialized - Ref: ${reference}`,
-    );
+    // this.logger.log(
+    //   `[Payment Init] ✅ Booking ${bookingId} initialized - Ref: ${reference}`,
+    // );
+
+    this.logger.log({
+      message: 'Booking initalized',
+      status: booking.status,
+      bookingId: booking._id.toString(),
+      reference: reference,
+    });
 
     // ✅ Step 6: Return response to frontend
     return {
@@ -200,9 +209,15 @@ export class PaymentsService {
       // ✅ Step 4: Check if already marked as paid (Idempotency)
       // This prevents marking the same booking as paid multiple times
       if (booking.status === BookingStatus.PAID) {
-        this.logger.log(
-          `[Payment Verify] ℹ️ Booking ${bookingId} already marked as paid`,
-        );
+        // this.logger.log(
+        //   `[Payment Verify] ℹ️ Booking ${bookingId} already marked as paid`,
+        // );
+
+        this.logger.log({
+          event: 'PAYMENT_VERIFY',
+          bookingId: bookingId,
+          message: 'Booking already marked as paid',
+        });
         return {
           success: true,
           message: 'Payment already verified',
@@ -217,9 +232,16 @@ export class PaymentsService {
       booking.paidAt = new Date();
       await booking.save();
 
-      this.logger.log(
-        `[Payment Verify] ✅ Booking ${bookingId} marked as PAID via manual verification`,
-      );
+      // this.logger.log(
+      //   `[Payment Verify] ✅ Booking ${bookingId} marked as PAID via manual verification`,
+      // );
+
+      this.logger.log({
+        event: 'PAYMENT_VERIFY',
+        message:
+          'Payment fot this booking has been marked Paid bia manual verification',
+        bookingId: bookingId,
+      });
 
       // ✅ Step 6: Return success response
       return {
@@ -232,9 +254,15 @@ export class PaymentsService {
     } catch (error) {
       const message = error instanceof Error ? error.message : 'Unknown error';
 
-      this.logger.error(
-        `[Payment Verify] ❌ Error verifying payment: ${message}`,
-      );
+      // this.logger.error(
+      //   `[Payment Verify] ❌ Error verifying payment: ${message}`,
+      // );
+
+      this.logger.error({
+        event: 'PAYEMENT_VERIFY',
+        message: 'Error occured verifying payement',
+        status: message,
+      });
       throw error;
     }
   }
@@ -356,9 +384,10 @@ export class PaymentsService {
     const supportedEvents = ['charge.success', 'paymentrequest.success'];
 
     if (!supportedEvents.includes(event.event)) {
-      this.logger.log(
-        `[Webhook] ℹ️ Ignoring unsupported event type: ${event.event}`,
-      );
+      this.logger.log({
+        message: `[Webhook] ℹ️ Ignoring unsupported event type: ${event.event}`,
+        event: 'Webhook',
+      });
       return; // Not a payment success event, skip it
     }
 
@@ -672,8 +701,27 @@ export class PaymentsService {
     }
   }
 
+  private async changeShuttleStatus(
+    booking: ShuttleBookingDocument,
+    newStatus: BookingStatus,
+  ) {
+    if (booking.status === newStatus) return;
+
+    booking.status = newStatus;
+
+    booking.statusHistory.push({
+      status: newStatus,
+      changedAt: new Date(),
+    });
+
+    await booking.save();
+  }
+
   async verifyRefundStatus(reference: string) {
-    this.logger.log(`[Refund Verify] 🔍 Verifying refund for ${reference}`);
+    this.logger.log({
+      reference: reference,
+      message: `[Refund Verify] 🔍 Verifying refund for ${reference}`,
+    });
 
     // 1️⃣ Find booking (normal or shuttle)
     const booking =
@@ -721,9 +769,11 @@ export class PaymentsService {
         },
       });
 
-      this.logger.log(
-        `[Refund Verify] ✅ Booking ${booking._id.toString()} marked as REFUNDED`,
-      );
+      this.logger.log({
+        event: 'REFUND_VERIFY',
+        bookingId: booking._id.toString(),
+        status: booking.status,
+      });
 
       return {
         success: true,
@@ -735,9 +785,11 @@ export class PaymentsService {
       booking.status = BookingStatus.PAID; // rollback
       await booking.save();
 
-      this.logger.error(
-        `[Refund Verify] ❌ Refund failed for booking ${booking._id.toString()}`,
-      );
+      this.logger.error({
+        event: 'REFUND_VERIFY',
+        bookingId: booking._id.toString(),
+        status: booking.status,
+      });
 
       return {
         success: false,
@@ -778,6 +830,12 @@ export class PaymentsService {
 
     await this.paystackService.refundTransaction({
       reference: booking.paymentReference,
+    });
+
+    // Audit Logs
+    await this.auditService.log('REFUND_APPROVED', {
+      bookingId: booking._id,
+      performedBy: 'admin',
     });
 
     return {

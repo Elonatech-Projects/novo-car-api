@@ -60,3 +60,7 @@ export class UserBooking {
 export const UserBookingSchema = SchemaFactory.createForClass(UserBooking);
 
 UserBookingSchema.index({ tripId: 1, travelDate: 1 });
+
+UserBookingSchema.index({ paymentReference: 1 });
+
+UserBookingSchema.index({ status: 1 });

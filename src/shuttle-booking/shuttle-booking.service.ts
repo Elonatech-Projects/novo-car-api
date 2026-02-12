@@ -55,7 +55,13 @@ export class ShuttleBookingService {
       distanceKm,
       pricingBreakdown: pricing,
       totalPrice: pricing.total,
-      status: BookingStatus.PENDING,
+      status: BookingStatus.PENDING_PAYMENT,
+      statusHistory: [
+        {
+          status: BookingStatus.PENDING_PAYMENT,
+          changedAt: new Date(),
+        },
+      ],
     });
 
     return {
@@ -159,11 +165,29 @@ export class ShuttleBookingService {
     }
 
     booking.status = status;
-    await booking.save();
+    await this.changeStatus(booking, status);
 
     return {
       success: true,
       data: booking,
     };
+  }
+
+  private async changeStatus(
+    booking: ShuttleBookingDocument,
+    newStatus: BookingStatus,
+  ) {
+    if (booking.status === newStatus) {
+      return; // prevent duplicate pushes
+    }
+
+    booking.status = newStatus;
+
+    booking.statusHistory.push({
+      status: newStatus,
+      changedAt: new Date(),
+    });
+
+    await booking.save();
   }
 }

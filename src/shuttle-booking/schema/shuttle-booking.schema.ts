@@ -95,7 +95,11 @@ export class ShuttleBooking {
     verified: boolean;
   };
 
-  @Prop({ required: true, enum: BookingStatus, default: BookingStatus.PENDING })
+  @Prop({
+    required: true,
+    enum: BookingStatus,
+    default: BookingStatus.PENDING_PAYMENT,
+  })
   status: BookingStatus;
 
   @Prop({ unique: true })
@@ -108,6 +112,7 @@ export class ShuttleBooking {
   @Prop()
   paidAt?: Date;
 
+  // Immutable stored pricing at booking time
   @Prop({
     type: {
       baseFare: Number,
@@ -123,6 +128,7 @@ export class ShuttleBooking {
     total: number;
   };
 
+  // Calculate live pricing
   @Prop({ type: Object })
   pricingBreakdown: {
     baseFare: number;
@@ -136,8 +142,34 @@ export class ShuttleBooking {
 
   @Prop({ default: false, type: Boolean })
   refundFinalized?: boolean;
+
+  @Prop({
+    type: [
+      {
+        status: { type: String, enum: BookingStatus },
+        changedAt: { type: Date, default: Date.now },
+      },
+    ],
+    default: [],
+  })
+  statusHistory: { status: BookingStatus; changedAt: Date }[];
+
+  @Prop({
+    type: [
+      {
+        _id: false,
+        status: { type: String, enum: BookingStatus, required: true },
+        changedAt: { type: Date, default: Date.now },
+      },
+    ],
+    default: [],
+  })
 }
 
 export type ShuttleBookingDocument = ShuttleBooking & Document;
 export const ShuttleBookingSchema =
   SchemaFactory.createForClass(ShuttleBooking);
+
+ShuttleBookingSchema.index({ paymentReference: 1 });
+ShuttleBookingSchema.index({ bookingReference: 1 });
+ShuttleBookingSchema.index({ status: 1 });

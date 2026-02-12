@@ -9,7 +9,13 @@ export class EmailService {
     // 🔌 PLUG & PLAY POINT
     // Later: nodemailer / sendgrid / ses
 
-    this.logger.log('📧 Email queued');
+    // this.logger.log('📧 Email queued');
+
+    this.logger.log({
+      service: 'Email Service',
+      message: 'Email queued',
+    });
+
     this.logger.log(JSON.stringify(payload, null, 2));
 
     // DO NOT throw here

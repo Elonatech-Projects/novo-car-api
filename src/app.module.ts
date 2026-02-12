@@ -22,6 +22,8 @@ import { ShuttleBookingModule } from './shuttle-booking/shuttle-booking.module';
 import { PricingModule } from './pricing/pricing.module';
 import { MapsModule } from './maps/maps.module';
 import { NotificationsModule } from './notifications/notifications.module';
+// import { AuditService } from './audit/audit.service';
+import { AuditModule } from './audit/audit.module';
 
 @Module({
   imports: [
@@ -69,6 +71,7 @@ import { NotificationsModule } from './notifications/notifications.module';
     PricingModule,
     MapsModule,
     NotificationsModule,
+    AuditModule,
   ],
   controllers: [],
   providers: [],

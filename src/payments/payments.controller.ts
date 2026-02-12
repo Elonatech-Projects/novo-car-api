@@ -48,22 +48,35 @@ export class PaymentsController {
       const { rawBody } = req;
 
       if (!rawBody || rawBody.length === 0) {
-        this.logger.error('[Webhook] ❌ rawBody missing');
+        // this.logger.error('[Webhook] ❌ rawBody missing');
+        this.logger.error({
+          service: 'Payments Controller',
+          message: '❌ rawBody missing',
+        });
         return { received: false };
       }
 
-      this.logger.log(`[Webhook] 📨 ${rawBody.length} bytes received`);
+      this.logger.log({
+        message: `[Webhook] 📨 ${rawBody.length} bytes received`,
+        rawBody: rawBody.length.toString(),
+      });
 
       await this.paymentsService.handlePaystackWebhook(signature, rawBody);
 
-      this.logger.log(`[Webhook] ✅ Processed in ${Date.now() - startTime}ms`);
+      const time = Date.now() - startTime;
+
+      this.logger.log({
+        message: `[Webhook] ✅ Processed in ${time}ms`,
+        status: time,
+        file: 'Payments Controller',
+      });
 
       return { received: true };
     } catch (error: unknown) {
       const message =
         error instanceof Error ? error.message : 'Unknown webhook error';
 
-      this.logger.error(`[Webhook] ❌ ${message}`);
+      this.logger.error({ message: message });
       return { received: true }; // ALWAYS 200
     }
   }

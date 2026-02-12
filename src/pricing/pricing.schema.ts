@@ -31,3 +31,5 @@ export class Pricing {
 
 export type PricingDocument = Pricing & Document;
 export const PricingSchema = SchemaFactory.createForClass(Pricing);
+
+PricingSchema.index({ shuttleType: 1 }, { unique: true });

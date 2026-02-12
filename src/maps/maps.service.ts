@@ -19,9 +19,13 @@ export class MapsService {
   async getDistanceKm(origin: string, destination: string): Promise<number> {
     // 🧠 DEV / SAFETY FALLBACK
     if (!process.env.GOOGLE_MAPS_API_KEY) {
-      this.logger.warn(
-        '[MapsService] GOOGLE_MAPS_API_KEY missing — using fallback distance (10km)',
-      );
+      // this.logger.warn(
+      //   '[MapsService] GOOGLE_MAPS_API_KEY missing — using fallback distance (10km)',
+      // );
+      this.logger.warn({
+        event: 'Google Maps Service',
+        message: 'Google Map API Key missing, using Distance of 10km',
+      });
       return 10; // safe dev default
     }
 

@@ -7,7 +7,7 @@
 //   CONFIRMED = 'confirmed',
 
 export enum BookingStatus {
-  PENDING = 'pending',
+  // PENDING = 'pending',
   PENDING_PAYMENT = 'pending_payment',
   PAID = 'paid',
   CONFIRMED = 'confirmed',
