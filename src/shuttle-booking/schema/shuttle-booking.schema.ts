@@ -146,17 +146,6 @@ export class ShuttleBooking {
   @Prop({
     type: [
       {
-        status: { type: String, enum: BookingStatus },
-        changedAt: { type: Date, default: Date.now },
-      },
-    ],
-    default: [],
-  })
-  statusHistory: { status: BookingStatus; changedAt: Date }[];
-
-  @Prop({
-    type: [
-      {
         _id: false,
         status: { type: String, enum: BookingStatus, required: true },
         changedAt: { type: Date, default: Date.now },
@@ -164,6 +153,7 @@ export class ShuttleBooking {
     ],
     default: [],
   })
+  statusHistory: { status: BookingStatus; changedAt: Date }[];
 }
 
 export type ShuttleBookingDocument = ShuttleBooking & Document;
