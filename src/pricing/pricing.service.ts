@@ -73,7 +73,14 @@ export class PricingService {
       throw new BadRequestException('Pricing not configured for this service');
     }
 
-    return calculatePrice(rule, input);
+    const distanceKm = input.distanceKm ?? 10; // fallback
+    const surgeMultiplier = input.surgeMultiplier ?? 1;
+
+    return calculatePrice(rule, {
+      ...input,
+      distanceKm,
+      surgeMultiplier,
+    });
   }
 
   // async getEstimate(input: PricingInput){

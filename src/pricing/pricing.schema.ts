@@ -1,6 +1,6 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import { Document } from 'mongoose';
-import { ShuttleType } from '../shuttle-booking/enums'; // 👈 runtime enum
+import { ShuttleType } from '../shuttle-booking/enums';
 
 @Schema({ timestamps: true })
 export class Pricing {

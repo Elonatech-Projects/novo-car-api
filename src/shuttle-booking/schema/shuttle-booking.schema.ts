@@ -28,6 +28,18 @@ export class ShuttleBooking {
   @Prop()
   specialRequests?: string;
 
+  @Prop()
+  pickupLat?: number;
+
+  @Prop()
+  pickupLng?: number;
+
+  @Prop()
+  dropoffLat?: number;
+
+  @Prop()
+  dropoffLng?: number;
+
   /* User */
   @Prop()
   firstName?: string;
