@@ -110,4 +110,13 @@ export class PaymentsController {
   async approveRefund(@Param('id') id: string) {
     return this.paymentsService.approveRefund(id);
   }
+
+  //   **
+  // * Initialize payment for NEW shuttle-services engine
+  // * (Schedule-based seat locking system)
+  // */
+  @Post('initialize/service/:bookingId')
+  async initializeShuttleServicePayment(@Param('bookingId') bookingId: string) {
+    return this.paymentsService.initializeShuttleServicesPayment(bookingId);
+  }
 }

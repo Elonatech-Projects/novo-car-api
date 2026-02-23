@@ -1,9 +1,25 @@
-import { IsNotEmpty, IsString } from 'class-validator';
+import {
+  IsDateString,
+  IsMongoId,
+  IsNotEmpty,
+  IsNumber,
+  IsString,
+  Matches,
+  Min,
+} from 'class-validator';
+import { Type } from 'class-transformer';
 
 export class CreateShuttleServicesDto {
-  @IsString() @IsNotEmpty() name: string;
-  @IsString() @IsNotEmpty() pickup: string;
-  @IsString() @IsNotEmpty() phone: string;
-  @IsString() @IsNotEmpty() destination: string;
-  @IsString() @IsNotEmpty() date: string;
+  @IsMongoId()
+  scheduleId: string;
+
+  @IsDateString()
+  @Matches(/^\d{4}-\d{2}-\d{2}$/)
+  @IsNotEmpty()
+  travelDate: string; // YYYY-MM-DD
+
+  @Type(() => Number)
+  @IsNumber()
+  @Min(1)
+  seatCount: number;
 }

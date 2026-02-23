@@ -1,3 +1,4 @@
+// one-way.schema.ts
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import { Auth } from '../../auth/schema/auth-schema';
 import { Document, Types } from 'mongoose';

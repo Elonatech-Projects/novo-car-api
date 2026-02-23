@@ -51,7 +51,7 @@ export class TripsService {
     // 1️⃣ Validate required fields
     if (!pickupLocation || !dropoffLocation || !travelDate) {
       throw new BadRequestException(
-        'pickupLocation, dropoffLocation, and travelDate are required'
+        'pickupLocation, dropoffLocation, and travelDate are required',
       );
     }
 

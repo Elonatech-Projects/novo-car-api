@@ -1,11 +1,3 @@
-// export enum BookingStatus {
-//   PENDING_PAYMENT = 'pending_payment',
-//   PAID = 'paid',
-//   CANCELLED = 'cancelled',
-// }
-
-//   CONFIRMED = 'confirmed',
-
 export enum BookingStatus {
   // PENDING = 'pending',
   PENDING_PAYMENT = 'pending_payment',

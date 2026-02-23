@@ -74,7 +74,7 @@ export class Trip {
 
   // Optional: For specific date-based trips
   @Prop({ type: [String], default: [] })
-  specificDates: string[]; // e.g., ["2024-12-25", "2024-12-26"]
+  specificDates?: string[]; // e.g., ["2024-12-25", "2024-12-26"]
 
   // Availability tracking (could be real-time)
   // @Prop({

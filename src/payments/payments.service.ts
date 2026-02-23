@@ -30,10 +30,17 @@ import { PaystackWebhookEvent } from './types/paystack-webhook.type';
 import { BookingStatus } from '../common/enums/booking-status.enum';
 import { NotificationService } from '../notifications/notifications.service';
 import { AuditService } from '../audit/audit.service';
+import { ConfigService } from '@nestjs/config';
+import {
+  Shuttle,
+  ShuttleDocument,
+} from '../shuttle-services/schema/shuttle-service.schema';
+import { ShuttleBookingStatus } from '../common/enums/shuttle-booking.enum';
+import { Auth } from '../auth/schema/auth-schema';
 
 type PaystackMetadata = {
   bookingId?: string;
-  source?: 'booking' | 'shuttle-booking';
+  source?: 'booking' | 'shuttle-booking' | 'shuttle-services';
   sourceId?: string;
 };
 
@@ -44,6 +51,7 @@ export class PaymentsService {
   private readonly logger = new Logger(PaymentsService.name);
 
   constructor(
+    @InjectModel(Auth.name) private userModel: Model<Auth>,
     @InjectModel(UserBooking.name)
     private readonly bookingModel: Model<UserBooking>,
     private readonly paystackService: PaystackService, // Paystack Service
@@ -52,6 +60,11 @@ export class PaymentsService {
     private readonly shuttleBookingModel: Model<ShuttleBookingDocument>,
     private readonly notificationService: NotificationService,
     private readonly auditService: AuditService,
+
+    @InjectModel(Shuttle.name)
+    private readonly shuttleServicesModel: Model<ShuttleDocument>,
+
+    private readonly configService: ConfigService,
   ) {}
 
   /**
@@ -153,6 +166,73 @@ export class PaymentsService {
     };
   }
 
+  async initializeShuttleServicesPayment(bookingId: string) {
+    if (!isValidObjectId(bookingId)) {
+      throw new BadRequestException('Invalid booking ID');
+    }
+
+    const booking = await this.shuttleServicesModel.findById(bookingId);
+
+    if (!booking) {
+      throw new BadRequestException('Shuttle service booking not found');
+    }
+
+    if (booking.paymentReference) {
+      throw new BadRequestException(
+        'Payment already initialized for this booking',
+      );
+    }
+
+    if (booking.status === ShuttleBookingStatus.PAID) {
+      throw new BadRequestException('Booking already paid');
+    }
+
+    if (booking.status !== ShuttleBookingStatus.RESERVED) {
+      throw new BadRequestException('Booking not eligible for payment');
+    }
+
+    if (booking.expiresAt.getTime() < Date.now()) {
+      throw new BadRequestException('Booking expired');
+    }
+
+    // 🔥 Fetch user safely
+    const user = await this.userModel
+      .findById(booking.userId)
+      .select('email')
+      .lean();
+
+    if (!user?.email) {
+      throw new BadRequestException('User email not found');
+    }
+
+    const reference = `NOVO-SERVICE-${bookingId.slice(-6)}-${Date.now()}`;
+    const amountKobo = booking.totalAmount * 100;
+
+    const response = await this.paystackService.initializeTransaction({
+      email: user.email,
+      amount: amountKobo,
+      reference,
+      metadata: {
+        source: 'shuttle-services',
+        sourceId: booking._id.toString(),
+      },
+    });
+
+    booking.paymentReference = reference;
+    await booking.save();
+
+    this.logger.log({
+      event: 'SERVICE_PAYMENT_INITIALIZED',
+      bookingId,
+      reference,
+    });
+
+    return {
+      success: true,
+      authorizationUrl: response.data.authorization_url,
+      reference,
+    };
+  }
   /**
    * ═══════════════════════════════════════════════════════════════
    * 2️⃣ VERIFY PAYMENT (Manual Verification)
@@ -411,6 +491,10 @@ export class PaymentsService {
         await this.handleShuttleBookingPayment(sourceId, event);
         break;
 
+      case 'shuttle-services':
+        await this.handleShuttleServicesPayment(sourceId, event);
+        break;
+
       default:
         this.logger.warn(`[Webhook] Unknown payment source:`, source);
     }
@@ -649,6 +733,43 @@ export class PaymentsService {
           amountPaid: booking.price,
         },
       },
+    });
+  }
+
+  private async handleShuttleServicesPayment(
+    bookingId: string,
+    event: PaystackWebhookEvent,
+  ) {
+    const booking = await this.shuttleServicesModel.findById(bookingId);
+
+    if (!booking) return;
+
+    if (
+      booking.status === ShuttleBookingStatus.PAID ||
+      booking.status === ShuttleBookingStatus.REFUNDED
+    ) {
+      return;
+    }
+
+    const expectedAmount = booking.totalAmount * 100;
+
+    if (event.data.amount !== expectedAmount) {
+      this.logger.warn(
+        `Amount mismatch for shuttle-services booking ${bookingId}`,
+      );
+      return;
+    }
+
+    booking.status = ShuttleBookingStatus.PAID;
+    booking.paidAt = new Date(event.data.paid_at ?? Date.now());
+    booking.paymentVerified = true;
+
+    await booking.save();
+
+    this.logger.log({
+      event: 'PAYMENT_SUCCESS',
+      source: 'shuttle-services',
+      bookingId,
     });
   }
 

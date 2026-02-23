@@ -15,6 +15,11 @@ import {
 import { NotificationsModule } from '../notifications/notifications.module';
 // import { AuditService } from '../audit/audit.service';
 import { AuditModule } from '../audit/audit.module';
+import {
+  Shuttle,
+  ShuttleServicesSchema,
+} from '../shuttle-services/schema/shuttle-service.schema';
+import { Auth } from '../auth/schema/auth-schema';
 // import { HttpModule } from '@nestjs/axios';
 // import { AnotherBooking, AnotherBookingSchema } from '../admin-booking/schema/another-booking.schema';
 
@@ -26,7 +31,8 @@ import { AuditModule } from '../audit/audit.module';
     MongooseModule.forFeature([
       { name: UserBooking.name, schema: UserBookingSchema },
       { name: ShuttleBooking.name, schema: ShuttleBookingSchema },
-      // { name: AnotherBooking.name, schema: AnotherBookingSchema },
+      { name: Shuttle.name, schema: ShuttleServicesSchema },
+      { name: Auth.name, schema: Auth },
     ]),
   ],
   controllers: [PaymentsController],
