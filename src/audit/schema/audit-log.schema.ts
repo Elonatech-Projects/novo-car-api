@@ -19,6 +19,12 @@ export class AuditLog {
 
   @Prop({ type: Object })
   metadata?: Record<string, unknown>;
+
+  @Prop()
+  reference?: string;
+
+  @Prop()
+  amount?: number;
 }
 
 export const AuditLogSchema = SchemaFactory.createForClass(AuditLog);

@@ -48,3 +48,5 @@ export interface PaystackRefundResponse {
     status: 'pending' | 'processed' | 'failed';
   };
 }
+
+export type PaymentSource = 'booking' | 'shuttle-booking' | 'shuttle-services';

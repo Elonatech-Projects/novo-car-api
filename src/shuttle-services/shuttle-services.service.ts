@@ -10,6 +10,7 @@ import { InjectConnection, InjectModel } from '@nestjs/mongoose';
 import { Auth } from '../auth/schema/auth-schema';
 import { Schedule, ScheduleDocument } from '../schedule/schema/schedule.schema';
 import { getWeekDay } from '../common/utils/get-weekday.util';
+import { ShuttleBookingStatus } from '../common/enums/shuttle-booking.enum';
 
 @Injectable()
 export class ShuttleServicesService {
@@ -35,6 +36,22 @@ export class ShuttleServicesService {
     try {
       const { scheduleId, travelDate, seatCount } = payload;
 
+      if (!Types.ObjectId.isValid(scheduleId)) {
+        throw new BadRequestException('Invalid schedule ID');
+      }
+
+      if (seatCount < 1) {
+        throw new BadRequestException('Seat count must be at least 1');
+      }
+
+      // Validate user
+      const user = await this.userModel.findById(userId).session(session);
+
+      if (!user) {
+        throw new NotFoundException('User not found');
+      }
+
+      // Validate schedule
       const schedule = await this.scheduleModel
         .findById(scheduleId)
         .session(session);
@@ -44,9 +61,7 @@ export class ShuttleServicesService {
       }
 
       // Validate date not in past
-      const travel = new Date(travelDate);
-      travel.setHours(0, 0, 0, 0);
-
+      const travel = new Date(`${travelDate}T00:00:00`);
       const today = new Date();
       today.setHours(0, 0, 0, 0);
 
@@ -65,30 +80,32 @@ export class ShuttleServicesService {
 
       const now = new Date();
 
-      // Lazy cleanup
+      // 🔥 Expire only RESERVED bookings
       await this.shuttleModel.updateMany(
         {
-          status: 'reserved',
+          scheduleId,
+          travelDate,
+          status: ShuttleBookingStatus.RESERVED,
           expiresAt: { $lt: now },
         },
         {
-          $set: { status: 'expired' },
+          $set: {
+            status: ShuttleBookingStatus.EXPIRED,
+          },
         },
         { session },
       );
 
-      type SeatAggregationResult = {
-        _id: null;
-        total: number;
-      };
-
+      // Aggregate reserved + paid seats
       const reservedSeats = await this.shuttleModel
-        .aggregate<SeatAggregationResult>([
+        .aggregate<{ total: number }>([
           {
             $match: {
               scheduleId: new Types.ObjectId(scheduleId),
               travelDate,
-              status: { $in: ['reserved', 'paid'] },
+              status: {
+                $in: [ShuttleBookingStatus.RESERVED, ShuttleBookingStatus.PAID],
+              },
             },
           },
           {
@@ -109,6 +126,24 @@ export class ShuttleServicesService {
         throw new BadRequestException(`Only ${availableSeats} seats available`);
       }
 
+      // Optional duplicate prevention
+      const existingReservation = await this.shuttleModel
+        .findOne({
+          userId,
+          scheduleId,
+          travelDate,
+          status: {
+            $in: [ShuttleBookingStatus.RESERVED, ShuttleBookingStatus.PAID],
+          },
+        })
+        .session(session);
+
+      if (existingReservation) {
+        throw new BadRequestException(
+          'You already have a reservation for this schedule',
+        );
+      }
+
       const expiresAt = new Date(now.getTime() + 15 * 60 * 1000);
 
       const totalAmount = schedule.basePrice * seatCount;
@@ -121,7 +156,7 @@ export class ShuttleServicesService {
             userId,
             seatCount,
             totalAmount,
-            status: 'reserved',
+            status: ShuttleBookingStatus.RESERVED,
             expiresAt,
           },
         ],

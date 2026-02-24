@@ -1,6 +1,7 @@
 // src/payments/types/paystack-webhook.type.ts
 
-export type PaymentSource = 'booking' | 'shuttle-booking' | 'shuttle-services';
+import { PaymentSource } from './paystack.types';
+
 export interface PaystackWebhookEvent {
   event: string;
   data: {

@@ -83,33 +83,33 @@ export class PaymentsController {
 
   // ShuttleBooking Route
   @Post('initialize/shuttle/:shuttleBookingId')
-  async initializeShuttlePayment(
-    @Param('shuttleBookingId') shuttleBookingId: string,
-  ) {
-    return this.paymentsService.initializeShuttleBookingPayment(
-      shuttleBookingId,
-    );
-  }
+  // async initializeShuttlePayment(
+  //   @Param('shuttleBookingId') shuttleBookingId: string,
+  // ) {
+  //   return this.paymentsService.initializeShuttleBookingPayment(
+  //     shuttleBookingId,
+  //   );
+  // }
 
-  @Post('refund')
-  async requestRefund(@Body() dto: RequestRefundDto) {
-    return this.paymentsService.requestRefund(
-      dto.source,
-      dto.sourceId,
-      dto.reason,
-    );
-  }
+  // @Post('refund')
+  // async requestRefund(@Body() dto: RequestRefundDto) {
+  //   return this.paymentsService.requestRefund(
+  //     dto.source,
+  //     dto.sourceId,
+  //     dto.reason,
+  //   );
+  // }
 
-  @Get('refund/verify/:reference')
-  async verifyRefund(@Param('reference') reference: string) {
-    return this.paymentsService.verifyRefundStatus(reference);
-  }
+  // @Get('refund/verify/:reference')
+  // async verifyRefund(@Param('reference') reference: string) {
+  //   return this.paymentsService.verifyRefundStatus(reference);
+  // }
 
-  @Post('refund/approve/:id')
-  @UseGuards(JwtAdminGuard)
-  async approveRefund(@Param('id') id: string) {
-    return this.paymentsService.approveRefund(id);
-  }
+  // @Post('refund/approve/:id')
+  // @UseGuards(JwtAdminGuard)
+  // async approveRefund(@Param('id') id: string) {
+  //   return this.paymentsService.approveRefund(id);
+  // }
 
   //   **
   // * Initialize payment for NEW shuttle-services engine
