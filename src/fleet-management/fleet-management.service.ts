@@ -4,6 +4,7 @@ import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 import { Auth } from '../auth/schema/auth-schema';
 import { CreateFleetManagementDto } from './dto/create-fleet-management.dto';
+import { MailService } from '../mail/mail.service';
 
 @Injectable()
 export class FleetManagementService {
@@ -11,6 +12,7 @@ export class FleetManagementService {
     @InjectModel(FleetManagement.name)
     private fleetManagementModel: Model<FleetManagement>,
     @InjectModel(Auth.name) private userModel: Model<Auth>,
+    private readonly mailService: MailService,
   ) {}
 
   async createFleetManagement(dto: CreateFleetManagementDto) {
@@ -38,6 +40,17 @@ export class FleetManagementService {
     //   throw new BadRequestException('User not found');
     // }
 
+    // Validate date
+    const fleetDate = new Date(date);
+    const today = new Date();
+    today.setHours(0, 0, 0, 0); // Ignore time
+
+    if (fleetDate < today) {
+      throw new BadRequestException(
+        'Fleet management date cannot be in the past.',
+      );
+    }
+
     const fleetData = {
       name,
       email,
@@ -55,6 +68,31 @@ export class FleetManagementService {
     };
 
     const createdFleet = await this.fleetManagementModel.create(fleetData);
+
+    try {
+      await this.mailService.sendTemplateEmail(
+        dto.email,
+        'Fleet Management Request Received - Novo Cars',
+        'fleet-management',
+        { ...dto},
+      );
+    } catch (error) {
+      console.error('Failed to send fleet management email:', error);
+    }
+
+    const adminEmail = process.env.ADMIN_EMAIL || '';
+
+    // Admin notification
+    try {
+      await this.mailService.sendTemplateEmail(
+        adminEmail,
+        'New Fleet Management Booking - Novo Cars',
+        'fleet-management-admin',
+        { ...dto },
+      );
+    } catch (error) {
+      console.error('Failed to send fleet management admin email:', error);
+    }
 
     return {
       message: 'Fleet management booking created successfully',

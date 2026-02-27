@@ -9,6 +9,7 @@ import { Model } from 'mongoose';
 import { UserBooking, UserBookingDocument } from './schema/user-booking.schema';
 import { CreateUserBookingDto } from './dto/create-user-booking.dto';
 import { Trip, TripDocument } from '../trips/schema/trip.schema';
+// import { MailService } from '../mail/mail.service';
 
 @Injectable()
 export class BookingsService {
@@ -17,6 +18,8 @@ export class BookingsService {
     private readonly bookingModel: Model<UserBookingDocument>,
     @InjectModel(Trip.name)
     private readonly tripModel: Model<TripDocument>,
+
+    // private readonly mailService: MailService,
   ) {}
 
   // CREATE USER BOOKING
@@ -75,4 +78,10 @@ export class BookingsService {
     if (!booking) throw new NotFoundException('Booking not found');
     return { success: true, booking };
   }
+
+  //     await this.mailService.sendBookingConfirmation(
+  //     booking.email,
+  //     booking.fullName,
+  //     booking._id.toString(),
+  //   );
 }

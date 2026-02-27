@@ -4,6 +4,7 @@ import { CarRentalsService } from './car-rentals.service';
 import { CarRentalsController } from './car-rentals.controller';
 import { UserCarForm, CarRentalsSchema } from './schema/car-rentals.schema';
 import { Auth, AuthSchema } from '../auth/schema/auth-schema';
+import { MailService } from '../mail/mail.service';
 
 @Module({
   imports: [
@@ -12,7 +13,7 @@ import { Auth, AuthSchema } from '../auth/schema/auth-schema';
       { name: Auth.name, schema: AuthSchema },
     ]),
   ],
-  providers: [CarRentalsService],
+  providers: [CarRentalsService, MailService],
   controllers: [CarRentalsController],
 })
 export class CarRentalsModule {}

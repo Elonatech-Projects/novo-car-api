@@ -10,34 +10,34 @@ export class FleetManagement extends Document {
   // user: Types.ObjectId;
 
   @Prop({ required: true })
-  name: string;
+  name!: string;
 
   @Prop({ required: true })
-  email: string;
+  email!: string;
 
   @Prop({ required: true })
-  phone: string;
+  phone!: string;
 
   @Prop({ required: true })
-  pickup: string;
+  pickup!: string;
 
   @Prop({ required: true })
-  destination: string;
+  destination!: string;
 
   @Prop({ required: true })
-  date: string;
+  date!: string;
 
   @Prop({ required: true })
-  time: string;
+  time!: string;
 
   @Prop({ required: true })
-  passengerCount: string;
+  passengerCount!: string;
 
   @Prop({ required: true })
-  cargoDescription: string;
+  cargoDescription!: string;
 
   @Prop({ required: true })
-  specialRequests: string;
+  specialRequests!: string;
 
   @Prop({})
   vehicleType?: string;

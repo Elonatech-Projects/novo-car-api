@@ -25,6 +25,7 @@ import { NotificationsModule } from './notifications/notifications.module';
 // import { AuditService } from './audit/audit.service';
 import { AuditModule } from './audit/audit.module';
 import { ScheduleModule } from './schedule/schedule.module';
+import { MailModule } from './mail/mail.module';
 
 @Module({
   imports: [
@@ -74,6 +75,7 @@ import { ScheduleModule } from './schedule/schedule.module';
     NotificationsModule,
     AuditModule,
     ScheduleModule,
+    MailModule,
   ],
   controllers: [],
   providers: [],

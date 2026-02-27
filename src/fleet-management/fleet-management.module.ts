@@ -7,6 +7,7 @@ import {
 } from './schema/fleet-management-schema';
 import { Auth, AuthSchema } from '../auth/schema/auth-schema';
 import { MongooseModule } from '@nestjs/mongoose';
+import { MailService } from '../mail/mail.service';
 
 @Module({
   imports: [
@@ -16,6 +17,6 @@ import { MongooseModule } from '@nestjs/mongoose';
     ]),
   ],
   controllers: [FleetManagementController],
-  providers: [FleetManagementService],
+  providers: [FleetManagementService, MailService],
 })
 export class FleetManagementModule {}

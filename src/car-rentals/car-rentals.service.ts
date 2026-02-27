@@ -1,9 +1,12 @@
+// Car rentals service
 import { BadRequestException, Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { UserCarForm } from './schema/car-rentals.schema';
 import { Model } from 'mongoose';
 import { Auth } from '../auth/schema/auth-schema';
 import { CarRentalsDto } from './dto/car-rentals.dto';
+import { MailService } from '../mail/mail.service';
+import { ConfigService } from '@nestjs/config';
 
 @Injectable()
 export class CarRentalsService {
@@ -11,6 +14,8 @@ export class CarRentalsService {
     @InjectModel(UserCarForm.name)
     private carRentalModel: Model<UserCarForm>,
     @InjectModel(Auth.name) private userModel: Model<Auth>,
+    private readonly mailService: MailService,
+    private readonly configService: ConfigService,
   ) {}
 
   async createCarRentals(dto: CarRentalsDto) {
@@ -81,6 +86,35 @@ export class CarRentalsService {
 
     // Save to DB
     const createdCarRental = await this.carRentalModel.create(carRentalData);
+
+    try {
+      await this.mailService.sendTemplateEmail(
+        dto.email,
+        'Car Rental Request Received - Novo Cars',
+        'car-rentals',
+        {
+          ...dto,
+          pickupDate: pickup.toDateString(),
+          dropoffDate: dropoff.toDateString(),
+        },
+      );
+    } catch (error) {
+      console.error('Email failed:', error);
+    }
+
+    const adminEmail = this.configService.get<string>('ADMIN_EMAIL') || '';
+
+    // Admin notification
+    try {
+      await this.mailService.sendTemplateEmail(
+        adminEmail,
+        'New Car Rental Booking - Novo Cars',
+        'car-rentals-admin',
+        { ...dto },
+      );
+    } catch (error) {
+      console.error('Admin email failed:', error);
+    }
 
     return {
       message: 'Car rental created successfully',
