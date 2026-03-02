@@ -8,28 +8,28 @@ export class UserCarForm extends Document {
   userId?: Types.ObjectId;
 
   @Prop({ required: true })
-  bookingCategory: string;
+  bookingCategory!: string;
 
   @Prop({ required: true })
-  bookingModel: string;
+  bookingModel!: string;
 
   @Prop({ required: true })
-  name: string;
+  name!: string;
 
   @Prop({ required: true })
-  email: string;
+  email!: string;
 
   @Prop({ required: true })
-  phoneNumber: string;
+  phoneNumber!: string;
 
   @Prop({ required: true })
-  pickupDate: Date;
+  pickupDate!: Date;
 
   @Prop({ required: true })
-  dropoffDate: Date;
+  dropoffDate!: Date;
 
   @Prop({ required: true })
-  notes: string;
+  notes!: string;
 
   @Prop()
   subModel?: string;

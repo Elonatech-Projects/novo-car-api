@@ -74,7 +74,7 @@ export class FleetManagementService {
         dto.email,
         'Fleet Management Request Received - Novo Cars',
         'fleet-management',
-        { ...dto},
+        { ...dto },
       );
     } catch (error) {
       console.error('Failed to send fleet management email:', error);
