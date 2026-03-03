@@ -8,35 +8,35 @@ export type UserBookingDocument = UserBooking & Document;
 @Schema({ timestamps: true, collection: 'user_bookings' })
 export class UserBooking {
   @Prop({ type: Types.ObjectId, ref: 'Trip', required: true })
-  tripId: Types.ObjectId;
+  tripId!: Types.ObjectId;
 
   @Prop({ type: Types.ObjectId, ref: 'User', required: false })
   userId?: Types.ObjectId;
 
   @Prop({ required: true })
-  fullName: string;
+  fullName!: string;
 
   @Prop({ required: true })
-  email: string;
+  email!: string;
 
   @Prop({ required: true })
-  phone: string;
+  phone!: string;
 
   @Prop({ required: true })
-  passengers: number;
+  passengers!: number;
 
   @Prop({ required: true })
-  travelDate: string;
+  travelDate!: string;
 
   @Prop({ required: true })
-  price: number;
+  price!: number;
 
   @Prop({
     // type: String,
     enum: BookingStatus,
     default: BookingStatus.PENDING_PAYMENT,
   })
-  status: BookingStatus;
+  status!: BookingStatus;
 
   @Prop()
   paymentReference?: string;
@@ -61,6 +61,6 @@ export const UserBookingSchema = SchemaFactory.createForClass(UserBooking);
 
 UserBookingSchema.index({ tripId: 1, travelDate: 1 });
 
-UserBookingSchema.index({ paymentReference: 1 });
+// UserBookingSchema.index({ paymentReference: 1 });
 
 UserBookingSchema.index({ status: 1 });

@@ -9,29 +9,29 @@ export type ShuttleDocument = Shuttle & Document;
 @Schema({ timestamps: true })
 export class Shuttle {
   @Prop({ type: Types.ObjectId, ref: 'Schedule', required: true })
-  scheduleId: Types.ObjectId;
+  scheduleId!: Types.ObjectId;
 
   @Prop({ type: Types.ObjectId, ref: Auth.name, required: true })
-  userId: Types.ObjectId;
+  userId!: Types.ObjectId;
 
   @Prop({ required: true })
-  travelDate: string; // YYYY-MM-DD
+  travelDate!: string; // YYYY-MM-DD
 
   @Prop({ required: true, min: 1 })
-  seatCount: number;
+  seatCount!: number;
 
   @Prop({ required: true })
-  totalAmount: number;
+  totalAmount!: number;
 
   @Prop({
     type: String,
     enum: ShuttleBookingStatus,
     default: ShuttleBookingStatus.RESERVED,
   })
-  status: ShuttleBookingStatus;
+  status!: ShuttleBookingStatus;
 
   @Prop({ required: true })
-  expiresAt: Date;
+  expiresAt!: Date;
 
   @Prop({ required: false })
   paidAt?: Date;
@@ -40,7 +40,7 @@ export class Shuttle {
   paymentReference?: string;
 
   @Prop({ default: false })
-  paymentVerified: boolean;
+  paymentVerified!: boolean;
 }
 
 export const ShuttleServicesSchema = SchemaFactory.createForClass(Shuttle);
@@ -52,4 +52,4 @@ ShuttleServicesSchema.index({ expiresAt: 1 });
 ShuttleServicesSchema.index({ status: 1, expiresAt: 1 });
 
 // Index to quickly find bookings by payment reference
-ShuttleServicesSchema.index({ paymentReference: 1 });
+// ShuttleServicesSchema.index({ paymentReference: 1 });

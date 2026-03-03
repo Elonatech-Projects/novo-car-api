@@ -8,22 +8,22 @@ import { BookingStatus } from '../../common/enums/booking-status.enum';
 export class ShuttleBooking {
   /* Core */
   @Prop({ required: true, enum: ShuttleType })
-  shuttleType: ShuttleType;
+  shuttleType!: ShuttleType;
 
   @Prop({ required: true })
-  pickupLocation: string;
+  pickupLocation!: string;
 
   @Prop({ required: true })
-  dropoffLocation: string;
+  dropoffLocation!: string;
 
   @Prop({ required: true })
-  bookingDate: string;
+  bookingDate!: string;
 
   @Prop({ required: true })
-  pickupTime: string;
+  pickupTime!: string;
 
   @Prop({ required: true, min: 1 })
-  numberOfPassengers: number;
+  numberOfPassengers!: number;
 
   @Prop()
   specialRequests?: string;
@@ -88,7 +88,7 @@ export class ShuttleBooking {
 
   /* Payment */
   @Prop({ required: true })
-  totalPrice: number;
+  totalPrice!: number;
 
   @Prop({
     type: {
@@ -112,10 +112,10 @@ export class ShuttleBooking {
     enum: BookingStatus,
     default: BookingStatus.PENDING_PAYMENT,
   })
-  status: BookingStatus;
+  status!: BookingStatus;
 
   @Prop({ unique: true })
-  bookingReference: string;
+  bookingReference!: string;
 
   /* Payment */
   @Prop()
@@ -142,7 +142,7 @@ export class ShuttleBooking {
 
   // Calculate live pricing
   @Prop({ type: Object })
-  pricingBreakdown: {
+  pricingBreakdown!: {
     baseFare: number;
     serviceCharge: number;
     vat: number;
@@ -165,13 +165,13 @@ export class ShuttleBooking {
     ],
     default: [],
   })
-  statusHistory: { status: BookingStatus; changedAt: Date }[];
+  statusHistory!: { status: BookingStatus; changedAt: Date }[];
 }
 
 export type ShuttleBookingDocument = ShuttleBooking & Document;
 export const ShuttleBookingSchema =
   SchemaFactory.createForClass(ShuttleBooking);
 
-ShuttleBookingSchema.index({ paymentReference: 1 });
+// ShuttleBookingSchema.index({ paymentReference: 1 });
 ShuttleBookingSchema.index({ bookingReference: 1 });
 ShuttleBookingSchema.index({ status: 1 });

@@ -1,5 +1,5 @@
 // Car rentals service
-import { BadRequestException, Injectable } from '@nestjs/common';
+import { BadRequestException, Injectable, Logger } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { UserCarForm } from './schema/car-rentals.schema';
 import { Model } from 'mongoose';
@@ -10,10 +10,13 @@ import { ConfigService } from '@nestjs/config';
 
 @Injectable()
 export class CarRentalsService {
+  private readonly logger = new Logger(CarRentalsService.name);
+
   constructor(
     @InjectModel(UserCarForm.name)
-    private carRentalModel: Model<UserCarForm>,
-    @InjectModel(Auth.name) private userModel: Model<Auth>,
+    private readonly carRentalModel: Model<UserCarForm>,
+    @InjectModel(Auth.name)
+    private readonly userModel: Model<Auth>,
     private readonly mailService: MailService,
     private readonly configService: ConfigService,
   ) {}
@@ -102,18 +105,17 @@ export class CarRentalsService {
       console.error('Email failed:', error);
     }
 
-    const adminEmail = this.configService.get<string>('ADMIN_EMAIL') || '';
+    const adminEmail = this.configService.get<string>('ADMIN_EMAIL');
 
-    // Admin notification
-    try {
+    if (!adminEmail) {
+      this.logger.warn('ADMIN_EMAIL not configured — skipping admin email.');
+    } else {
       await this.mailService.sendTemplateEmail(
         adminEmail,
         'New Car Rental Booking - Novo Cars',
         'car-rentals-admin',
         { ...dto },
       );
-    } catch (error) {
-      console.error('Admin email failed:', error);
     }
 
     return {
