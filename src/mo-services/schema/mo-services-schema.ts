@@ -20,7 +20,7 @@ export class ManPower extends Document {
     trim: true,
     minlength: [2, 'Name must be at least 2 characters long'],
   })
-  name: string;
+  name!: string;
 
   @Prop({
     required: [true, 'Email is required'],
@@ -28,19 +28,19 @@ export class ManPower extends Document {
     trim: true,
     match: [/^\S+@\S+\.\S+$/, 'Please provide a valid email address'],
   })
-  email: string;
+  email!: string;
 
   @Prop({
     required: [true, 'Phone number is required'],
     trim: true,
   })
-  phoneNumber: string;
+  phoneNumber!: string;
 
   @Prop({
     required: [true, 'Company name is required'],
     trim: true,
   })
-  companyName: string;
+  companyName!: string;
 
   @Prop({
     required: [true, 'Industry is required'],
@@ -58,20 +58,20 @@ export class ManPower extends Document {
       message: 'Please select a valid industry',
     },
   })
-  industry: string;
+  industry!: string;
 
   @Prop({
     required: false,
     default: '',
-    maxlength: [1000, 'Details cannot exceed 1000 characters'],
+    maxlength: [5000, 'Details cannot exceed 5000 characters'],
   })
-  details: string;
+  details!: string;
 
   @Prop({
     required: [true, 'Staff count is required'],
-    set: (val: any) => Math.max(1, parseInt(val) || 1).toString(),
+    set: (val: any) => Math.max(1, parseInt(String(val)) || 1).toString(),
   })
-  staff: string;
+  staff!: string;
 
   @Prop({
     required: [true, 'Duration is required'],
@@ -84,7 +84,7 @@ export class ManPower extends Document {
       message: 'Please select a valid duration',
     },
   })
-  duration: string;
+  duration!: string;
 
   @Prop({
     default: 'pending',
@@ -97,10 +97,10 @@ export class ManPower extends Document {
       'completed',
     ],
   })
-  status: string;
+  status!: string;
 
   @Prop({ default: false })
-  isArchived: boolean;
+  isArchived!: boolean;
 }
 
 export const ManPowerSchema = SchemaFactory.createForClass(ManPower);

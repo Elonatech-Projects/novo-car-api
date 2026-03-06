@@ -42,7 +42,7 @@ export class ContactUsService {
       await this.mailService.sendTemplateEmail(
         adminEmail,
         'New Contact Us Received - Novo Cars',
-        'contact-us-notification',
+        'contact-us-admin',
         { ...dto },
       );
     }

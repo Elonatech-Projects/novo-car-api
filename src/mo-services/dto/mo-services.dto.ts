@@ -14,21 +14,21 @@ import { Transform } from 'class-transformer';
 export class CreateMoServicesDto {
   @IsString()
   @IsNotEmpty({ message: 'Name is required' })
-  name: string;
+  name!: string;
 
   @IsEmail({}, { message: 'Please provide a valid email address' })
   @IsNotEmpty({ message: 'Email is required' })
   @Transform(({ value }) => value.toLowerCase().trim())
-  email: string;
+  email!: string;
 
   @IsString()
   @IsNotEmpty({ message: 'Phone number is required' })
   @Transform(({ value }) => value.replace(/\D/g, '')) // Remove non-digits
-  phoneNumber: string;
+  phoneNumber!: string;
 
   @IsString()
   @IsNotEmpty({ message: 'Company name is required' })
-  companyName: string;
+  companyName!: string;
 
   @IsString()
   @IsNotEmpty({ message: 'Industry is required' })
@@ -45,16 +45,16 @@ export class CreateMoServicesDto {
     ],
     { message: 'Please select a valid industry' },
   )
-  industry: string;
+  industry!: string;
 
   @IsString()
   @IsOptional()
-  details: string;
+  details!: string;
 
   @IsNumberString({}, { message: 'Staff count must be a number' })
   @Transform(({ value }) => Math.max(1, parseInt(value) || 1).toString())
   @IsNotEmpty({ message: 'Staff count is required' })
-  staff: string;
+  staff!: string;
 
   @IsString()
   @IsNotEmpty({ message: 'Duration is required' })
@@ -65,7 +65,7 @@ export class CreateMoServicesDto {
     ],
     { message: 'Please select a valid duration' },
   )
-  duration: string;
+  duration!: string;
 }
 
 export class UpdateStatusDto {
@@ -79,5 +79,5 @@ export class UpdateStatusDto {
     'rejected',
     'completed',
   ])
-  status: string;
+  status!: string;
 }

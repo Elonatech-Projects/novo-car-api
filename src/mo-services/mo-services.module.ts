@@ -3,6 +3,7 @@ import { MongooseModule } from '@nestjs/mongoose';
 import { MoServicesService } from './mo-services.service';
 import { MoServicesController } from './mo-services.controller';
 import { ManPower, ManPowerSchema } from './schema/mo-services-schema';
+import { MailService } from '../mail/mail.service';
 
 @Module({
   imports: [
@@ -11,7 +12,7 @@ import { ManPower, ManPowerSchema } from './schema/mo-services-schema';
     ]),
   ],
   controllers: [MoServicesController],
-  providers: [MoServicesService],
+  providers: [MoServicesService, MailService],
   exports: [MoServicesService],
 })
 export class MoServicesModule {}

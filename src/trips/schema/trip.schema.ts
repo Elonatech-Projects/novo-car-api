@@ -17,13 +17,13 @@ export type TripDocument = Trip & Document;
 @Schema({ timestamps: true })
 export class Trip {
   @Prop({ required: true, unique: true })
-  routeCode: string; // e.g., "LAG-ABJ-001"
+  routeCode!: string; // e.g., "LAG-ABJ-001"
 
   @Prop({ required: true })
-  pickupLocation: string; // City name or specific location
+  pickupLocation!: string; // City name or specific location
 
   @Prop({ required: true })
-  dropoffLocation: string;
+  dropoffLocation!: string;
 
   @Prop({
     enum: [
@@ -36,41 +36,41 @@ export class Trip {
     ],
     required: true,
   })
-  shuttleType: ShuttleType;
+  shuttleType!: ShuttleType;
 
   @Prop({ required: true })
-  vehicleType: string; // e.g., "18-Seater Bus", "14-Seater Bus"
+  vehicleType!: string; // e.g., "18-Seater Bus", "14-Seater Bus"
 
   @Prop({ required: true, min: 1 })
-  capacity: number; // Maximum passengers
+  capacity!: number; // Maximum passengers
 
   @Prop({ required: true, min: 0 })
-  basePrice: number; // Price per person
+  basePrice!: number; // Price per person
 
   @Prop({ required: true })
-  departureTime: string; // e.g., "08:00" (24-hour format)
+  departureTime!: string; // e.g., "08:00" (24-hour format)
 
   @Prop({ required: true })
-  arrivalTime: string; // e.g., "14:00"
+  arrivalTime!: string; // e.g., "14:00"
 
   @Prop({ required: true })
-  duration: string; // e.g., "6 hours", "6h 30m"
+  duration!: string; // e.g., "6 hours", "6h 30m"
 
   @Prop({
     type: [String],
     enum: ['MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT', 'SUN'],
     required: true,
   })
-  operatingDays: WeekDay[];
+  operatingDays!: WeekDay[];
 
   @Prop({ type: [String], default: [] })
-  amenities: string[]; // e.g., ["AC", "WiFi", "Refreshments"]
+  amenities!: string[]; // e.g., ["AC", "WiFi", "Refreshments"]
 
   @Prop({ type: Types.ObjectId, ref: 'Admin' })
-  createdBy: Types.ObjectId;
+  createdBy!: Types.ObjectId;
 
   @Prop({ default: true })
-  isAvailable: boolean;
+  isAvailable!: boolean;
 
   // Optional: For specific date-based trips
   @Prop({ type: [String], default: [] })

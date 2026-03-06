@@ -6,32 +6,32 @@ export type ScheduleDocument = Schedule & Document;
 @Schema({ timestamps: true })
 export class Schedule {
   @Prop({ required: true, unique: true })
-  code: string;
+  code!: string;
 
   @Prop({ required: true })
-  from: string;
+  from!: string;
 
   @Prop({ required: true })
-  to: string;
+  to!: string;
 
   @Prop({ required: true })
-  departureTime: string;
+  departureTime!: string;
 
   @Prop({ required: true, min: 1 })
-  capacity: number;
+  capacity!: number;
 
   @Prop({ required: true, min: 0 })
-  basePrice: number;
+  basePrice!: number;
 
   @Prop({
     type: [String],
     enum: ['MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT', 'SUN'],
     required: true,
   })
-  operatingDays: string[];
+  operatingDays!: string[];
 
   @Prop({ default: true })
-  isActive: boolean;
+  isActive!: boolean;
 }
 export const ScheduleSchema = SchemaFactory.createForClass(Schedule);
 

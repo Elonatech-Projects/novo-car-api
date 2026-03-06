@@ -26,6 +26,7 @@ import { NotificationsModule } from './notifications/notifications.module';
 import { AuditModule } from './audit/audit.module';
 import { ScheduleModule } from './schedule/schedule.module';
 import { MailModule } from './mail/mail.module';
+import { VerificationServicesModule } from './verification-services/verification-services.module';
 
 @Module({
   imports: [
@@ -76,6 +77,7 @@ import { MailModule } from './mail/mail.module';
     AuditModule,
     ScheduleModule,
     MailModule,
+    VerificationServicesModule,
   ],
   controllers: [],
   providers: [],

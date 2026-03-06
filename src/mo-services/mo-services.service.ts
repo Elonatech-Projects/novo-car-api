@@ -2,17 +2,23 @@ import {
   Injectable,
   ConflictException,
   InternalServerErrorException,
+  Logger,
 } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { ManPower } from './schema/mo-services-schema';
 import { Model } from 'mongoose';
 import { CreateMoServicesDto } from './dto/mo-services.dto';
 import { MongoError } from 'mongodb';
+import { MailService } from '../mail/mail.service';
+import { ConfigService } from '@nestjs/config';
 
 @Injectable()
 export class MoServicesService {
+  private readonly logger: Logger = new Logger(MoServicesService.name);
   constructor(
     @InjectModel(ManPower.name) private readonly manPowerModel: Model<ManPower>,
+    private readonly configService: ConfigService,
+    private readonly mailService: MailService,
   ) {}
 
   async createManOutsourcing(dto: CreateMoServicesDto): Promise<ManPower> {
@@ -38,9 +44,20 @@ export class MoServicesService {
       });
 
       const savedManPower = await newManPower.save();
+      const adminEmail = this.configService.get<string>('ADMIN_EMAIL') || '';
 
-      // You can add email notification logic here
-      await this.sendNotificationEmail(savedManPower);
+      // Email notification to admin about new manpower request
+      try {
+        await this.mailService.sendTemplateEmail(
+          adminEmail,
+          'New Manpower Request',
+          'mo-services-admin',
+          { ...dto },
+        );
+        this.logger.log(`Notification email sent to admin: ${adminEmail}`);
+      } catch (error) {
+        this.logger.error('Failed to send notification email:', error);
+      }
 
       return savedManPower;
     } catch (error) {
