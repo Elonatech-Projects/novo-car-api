@@ -10,25 +10,25 @@ export class CareerJobs extends Document {
   // user: Types.ObjectId;
 
   @Prop({ required: true })
-  header: string;
+  header!: string;
 
   @Prop({ required: true })
-  location: string;
+  location!: string;
 
   @Prop({ required: true })
-  type: string;
+  type!: string;
 
   @Prop({ required: true })
-  category: string;
+  category!: string;
 
   @Prop({ required: true })
-  shortDescription: string;
+  shortDescription!: string;
 
   @Prop({ required: true })
-  postedDate: string;
+  postedDate!: string;
 
   @Prop({ required: true })
-  skills: [string];
+  skills!: [string];
 }
 
 export const CareerJobsSchema = SchemaFactory.createForClass(CareerJobs);

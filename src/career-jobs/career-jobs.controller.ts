@@ -21,7 +21,7 @@ export class CareerJobsController {
     return this.careerJobsService.createCareerJob(dto);
   }
 
-  @Get('fetch/careerjobs')
+  @Get('fetch')
   async getAllCareerJobs() {
     return this.careerJobsService.getCareerJob();
   }

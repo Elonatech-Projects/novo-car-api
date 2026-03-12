@@ -23,23 +23,17 @@ export class CareerJobsService {
       skills,
     } = dto;
 
-    if (
-      !header ||
-      !location ||
-      !type ||
-      !category ||
-      !shortDescription ||
-      !postedDate ||
-      !skills
-    ) {
-      throw new Error('All fields are to be filled');
+    for (const [key, value] of Object.entries(dto)) {
+      if (!value) {
+        throw new BadRequestException(`${key} is required`);
+      }
     }
 
-    // 🔥 Normalize skills to always be an array
+    // Normalize skills to always be an array
     const skillsArray =
       typeof skills === 'string'
         ? skills
-            .replace(/[\[\]]/g, '')
+            .replace(/[[\]]/g, '')
             .split(',')
             .map((s) => s.trim())
             .filter(Boolean)

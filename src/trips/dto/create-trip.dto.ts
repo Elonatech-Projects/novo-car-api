@@ -27,50 +27,50 @@ enum ShuttleTypeEnum {
 export class CreateTripDto {
   @IsString()
   @IsNotEmpty()
-  routeCode: string;
+  routeCode!: string;
 
   @IsString()
   @IsNotEmpty()
-  pickupLocation: string;
+  pickupLocation!: string;
 
   @IsString()
   @IsNotEmpty()
-  dropoffLocation: string;
+  dropoffLocation!: string;
 
   @IsEnum(ShuttleTypeEnum)
   @IsNotEmpty()
-  shuttleType: string;
+  shuttleType!: string;
 
   @IsString()
   @IsNotEmpty()
-  vehicleType: string;
+  vehicleType!: string;
 
   @Type(() => Number)
   @IsNumber()
   @Min(1)
-  capacity: number;
+  capacity!: number;
 
   @Type(() => Number)
   @IsNumber()
   @Min(0)
-  basePrice: number;
+  basePrice!: number;
 
   @IsString()
   @IsNotEmpty()
-  departureTime: string; // "08:00"
+  departureTime!: string; // "08:00"
 
   @IsString()
   @IsNotEmpty()
-  arrivalTime: string;
+  arrivalTime!: string;
 
   @IsString()
   @IsNotEmpty()
-  duration: string;
+  duration!: string;
 
   @IsArray()
   @ArrayNotEmpty()
   @IsEnum(['MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT', 'SUN'], { each: true })
-  operatingDays: string[];
+  operatingDays!: string[];
 
   @IsArray()
   @IsOptional()

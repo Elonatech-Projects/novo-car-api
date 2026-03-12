@@ -1,34 +1,23 @@
+// src/notifications/notification.service.ts
+
 import { Injectable } from '@nestjs/common';
-import { EmailService } from './email/email.service';
+import { MailService } from '../mail/mail.service';
+import { SendEmailOptions } from './interfaces/email-notification.interface';
 
 @Injectable()
 export class NotificationService {
-  constructor(private readonly emailService: EmailService) {}
+  constructor(private readonly mailService: MailService) {}
 
-  async paymentConfirmed(payload: {
-    source: 'booking' | 'shuttle-booking';
-    emailData: any;
-  }) {
-    setImmediate(async () => {
-      await this.emailService.send(payload.emailData);
-    });
-  }
-
-  async refundInitiated(payload: {
-    source: 'booking' | 'shuttle-booking';
-    emailData: any;
-  }) {
-    setImmediate(async () => {
-      await this.emailService.send(payload.emailData);
-    });
-  }
-
-  async refundCompleted(payload: {
-    source: 'booking' | 'shuttle-booking';
-    emailData: any;
-  }) {
-    setImmediate(async () => {
-      await this.emailService.send(payload.emailData);
-    });
+  /**
+   * Generic email sender used across the system
+   */
+  async sendEmail(options: SendEmailOptions): Promise<void> {
+    await this.mailService.sendTemplateEmail(
+      options.to,
+      options.subject,
+      options.template,
+      options.context,
+      options.attachments,
+    );
   }
 }

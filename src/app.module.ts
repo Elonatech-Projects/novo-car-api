@@ -27,9 +27,20 @@ import { AuditModule } from './audit/audit.module';
 import { ScheduleModule } from './schedule/schedule.module';
 import { MailModule } from './mail/mail.module';
 import { VerificationServicesModule } from './verification-services/verification-services.module';
+import { OdSchoolModule } from './od-school/od-school.module';
+import { ThrottlerModule } from '@nestjs/throttler';
+import { JobApplicationsModule } from './job-application/job-application.module';
 
 @Module({
   imports: [
+    ThrottlerModule.forRoot({
+      throttlers: [
+        {
+          ttl: 60000, // 1 minute
+          limit: 5, // max 5 requests
+        },
+      ],
+    }),
     ConfigModule.forRoot({
       isGlobal: true,
       envFilePath: '.env',
@@ -78,6 +89,8 @@ import { VerificationServicesModule } from './verification-services/verification
     ScheduleModule,
     MailModule,
     VerificationServicesModule,
+    OdSchoolModule,
+    JobApplicationsModule,
   ],
   controllers: [],
   providers: [],

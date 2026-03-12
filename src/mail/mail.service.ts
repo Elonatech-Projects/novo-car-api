@@ -17,11 +17,17 @@ interface BrevoEmailPayload {
   to: Array<{ email: string }>;
   subject: string;
   htmlContent: string;
+  attachment?: Array<{ name: string; content: string }>;
 }
 
 interface BrevoErrorResponse {
   message?: string;
   code?: string;
+}
+
+interface TemplateEmailAttachment {
+  filename: string;
+  content: Buffer | string;
 }
 
 @Injectable()
@@ -64,6 +70,7 @@ export class MailService {
     subject: string,
     templateName: string,
     context: Record<string, unknown>,
+    attachments?: TemplateEmailAttachment[],
   ): Promise<void> {
     try {
       const templatesDir = path.join(process.cwd(), 'src', 'mail', 'templates');
@@ -89,6 +96,14 @@ export class MailService {
         to: [{ email: to }],
         subject,
         htmlContent: finalHtml,
+        attachment: attachments?.length
+          ? attachments.map((file) => ({
+              name: file.filename,
+              content: Buffer.isBuffer(file.content)
+                ? file.content.toString('base64')
+                : Buffer.from(file.content).toString('base64'),
+            }))
+          : undefined,
       };
 
       await axios.post<void>('https://api.brevo.com/v3/smtp/email', payload, {
@@ -99,7 +114,7 @@ export class MailService {
         timeout: 10000, // 10s fail-fast
       });
 
-      this.logger.log(`Email sent → ${templateName} → ${to}`);
+      this.logger.log(`Email sent ? ${templateName} ? ${to}`);
     } catch (error: unknown) {
       if (axios.isAxiosError(error)) {
         const axiosError = error as AxiosError<BrevoErrorResponse>;
@@ -108,7 +123,7 @@ export class MailService {
           axiosError.response?.data?.message ?? axiosError.message;
 
         this.logger.error(
-          `Brevo API error → ${templateName} → ${to}`,
+          `Brevo API error ? ${templateName} ? ${to}`,
           brevoMessage,
         );
 
@@ -119,11 +134,11 @@ export class MailService {
 
       if (error instanceof Error) {
         this.logger.error(
-          `Unexpected mail error → ${templateName} → ${to}`,
+          `Unexpected mail error ? ${templateName} ? ${to}`,
           error.message,
         );
       } else {
-        this.logger.error(`Unknown mail failure → ${templateName} → ${to}`);
+        this.logger.error(`Unknown mail failure ? ${templateName} ? ${to}`);
       }
 
       throw new InternalServerErrorException(
