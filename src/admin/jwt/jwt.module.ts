@@ -1,3 +1,5 @@
+// JWT Module (Admin)
+// src\admin\jwt\jwt.module.ts
 import { Module } from '@nestjs/common';
 import { JwtModule } from '@nestjs/jwt';
 

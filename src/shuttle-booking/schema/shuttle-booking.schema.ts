@@ -169,6 +169,7 @@ export class ShuttleBooking {
 }
 
 export type ShuttleBookingDocument = ShuttleBooking & Document;
+
 export const ShuttleBookingSchema =
   SchemaFactory.createForClass(ShuttleBooking);
 

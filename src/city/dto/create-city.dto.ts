@@ -1,7 +1,9 @@
+// Create City DTO
+
 import { IsNotEmpty, IsString } from 'class-validator';
 
-export class VerifyPaymentDto {
+export class CreateCityDto {
   @IsString()
   @IsNotEmpty()
-  reference!: string;
+  name!: string;
 }

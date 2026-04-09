@@ -10,12 +10,12 @@ import {
   Req,
   Logger,
   Body,
-  UseGuards,
+  // UseGuards,
 } from '@nestjs/common';
 import { PaymentsService } from './payments.service';
-import { RequestRefundDto } from './dto/request-refund.dto';
+// import { RequestRefundDto } from './dto/request-refund.dto';
 import type { RequestWithRawBody } from '../common/interfaces/request-with-raw-body';
-import { JwtAdminGuard } from '../admin/guards/jwt-auth.guard';
+// import { JwtAdminGuard } from '../admin/guards/jwt-auth.guard';
 
 @Controller('payments')
 export class PaymentsController {
@@ -82,7 +82,7 @@ export class PaymentsController {
   }
 
   // ShuttleBooking Route
-  @Post('initialize/shuttle/:shuttleBookingId')
+  // @Post('initialize/shuttle/:shuttleBookingId')
   // async initializeShuttlePayment(
   //   @Param('shuttleBookingId') shuttleBookingId: string,
   // ) {
@@ -117,6 +117,11 @@ export class PaymentsController {
   // */
   @Post('initialize/service/:bookingId')
   async initializeShuttleServicePayment(@Param('bookingId') bookingId: string) {
+    return this.paymentsService.initializeShuttleServicesPayment(bookingId);
+  }
+
+  @Post('shuttle-services/:bookingId/initialize')
+  initializeShuttleServicesPayment(@Param('bookingId') bookingId: string) {
     return this.paymentsService.initializeShuttleServicesPayment(bookingId);
   }
 }

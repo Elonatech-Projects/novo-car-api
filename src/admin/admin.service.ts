@@ -1,3 +1,5 @@
+// Admin Service
+// src\admin\admin.service.ts
 import {
   BadRequestException,
   Injectable,
@@ -10,7 +12,6 @@ import { JwtService } from '@nestjs/jwt';
 import * as bcrypt from 'bcrypt';
 import { JwtPayload } from './jwt.admin.types';
 import { CreateAdminDto } from './dto/create-admin-dto';
-// import { Types } from 'mongoose';
 
 @Injectable()
 export class AdminService {
@@ -20,24 +21,24 @@ export class AdminService {
   ) {}
 
   // ============================
-  // Create Admin (NO TOKEN RETURNED)
+  // Create Admin
   // ============================
   async createAdmin(createAdminDto: CreateAdminDto) {
     const { email, password } = createAdminDto;
 
-    if (!email || !password) {
-      throw new BadRequestException('Email and password are required');
-    }
+    const existingAdmin = await this.adminModel.findOne({
+      // ✅ Normalize email to lowercase before querying — matches schema's lowercase:true
+      email: email.toLowerCase().trim(),
+    });
 
-    const existingAdmin = await this.adminModel.findOne({ email });
     if (existingAdmin) {
       throw new BadRequestException('Email already registered');
     }
 
-    const hashedPassword = await bcrypt.hash(password, 10);
+    const hashedPassword = await bcrypt.hash(password, 12); // ✅ Bumped from 10 to 12 rounds
 
     const admin = await this.adminModel.create({
-      email,
+      email: email.toLowerCase().trim(),
       password: hashedPassword,
     });
 
@@ -52,14 +53,25 @@ export class AdminService {
   }
 
   // ============================
-  // Login Admin (ONLY HERE RETURN TOKEN)
+  // Login Admin
   // ============================
   async loginAdmin(email: string, password: string) {
-    if (!email || !password) {
-      throw new BadRequestException('Email and password are required');
-    }
+    const normalizedEmail = email.toLowerCase().trim();
 
-    const registeredAdmin = await this.adminModel.findOne({ email });
+    const registeredAdmin = await this.adminModel.findOne({
+      email: normalizedEmail,
+    });
+
+    /**
+     * ✅ SECURITY FIX: Use the SAME exception type (UnauthorizedException)
+     * for both "email not found" and "wrong password" cases.
+     *
+     * Using BadRequestException for one and UnauthorizedException for the
+     * other leaks information — an attacker can tell whether an email exists
+     * in your system based on the HTTP status code (400 vs 401).
+     *
+     * Always return 401 for any credential mismatch.
+     */
     if (!registeredAdmin) {
       throw new UnauthorizedException('Invalid credentials');
     }
@@ -68,8 +80,9 @@ export class AdminService {
       password,
       registeredAdmin.password,
     );
+
     if (!passwordMatch) {
-      throw new BadRequestException('Invalid credentials');
+      throw new UnauthorizedException('Invalid credentials');
     }
 
     const payload: JwtPayload = {
@@ -77,7 +90,6 @@ export class AdminService {
       sub: String(registeredAdmin._id),
     };
 
-    // Generate JWT token ONLY on login
     const token = this.jwtService.sign(payload);
 
     return {

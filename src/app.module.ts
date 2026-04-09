@@ -30,6 +30,9 @@ import { VerificationServicesModule } from './verification-services/verification
 import { OdSchoolModule } from './od-school/od-school.module';
 import { ThrottlerModule } from '@nestjs/throttler';
 import { JobApplicationsModule } from './job-application/job-application.module';
+import { HealthModule } from './health/health.module';
+import { ChatModule } from './chat/chat.module';
+import { CityModule } from './city/city.module';
 
 @Module({
   imports: [
@@ -91,6 +94,9 @@ import { JobApplicationsModule } from './job-application/job-application.module'
     VerificationServicesModule,
     OdSchoolModule,
     JobApplicationsModule,
+    HealthModule,
+    ChatModule,
+    CityModule,
   ],
   controllers: [],
   providers: [],

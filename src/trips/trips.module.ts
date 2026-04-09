@@ -1,7 +1,7 @@
 import { Module } from '@nestjs/common';
 import { MongooseModule } from '@nestjs/mongoose';
-import { TripsService } from './trips.service';
-import { TripsController } from './trips.controller';
+// import { TripsService } from './trips.service';
+// import { TripsController } from './trips.controller';
 import { Trip, TripSchema } from './schema/trip.schema';
 import {
   UserBooking,
@@ -15,8 +15,8 @@ import {
       { name: UserBooking.name, schema: UserBookingSchema },
     ]),
   ],
-  providers: [TripsService],
-  controllers: [TripsController],
-  exports: [TripsService],
+  // providers: [TripsService],
+  // controllers: [TripsController],
+  // exports: [TripsService],
 })
 export class TripsModule {}

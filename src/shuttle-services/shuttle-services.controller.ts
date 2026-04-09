@@ -1,8 +1,11 @@
-import { Controller, Post, Body, Req, UseGuards } from '@nestjs/common';
+// Shuttle Service Controller
+// src/shuttle-services/shuttle-services.controller.ts
+import { Body, Controller, Post, Req, UseGuards } from '@nestjs/common';
+import { Request } from 'express';
+
 import { ShuttleServicesService } from './shuttle-services.service';
 import { CreateShuttleServicesDto } from './dto/create-shuttle-services.dto';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
-import { Request } from 'express';
 import { JwtUser } from '../auth/jwt.types';
 
 @Controller('shuttle-services')
@@ -18,6 +21,20 @@ export class ShuttleServicesController {
     @Body() dto: CreateShuttleServicesDto,
   ) {
     const userId = req.user._id;
-    return this.shuttleServicesService.createShuttle(dto, userId);
+
+    const booking = await this.shuttleServicesService.createShuttle(
+      dto,
+      userId,
+    );
+
+    return {
+      success: true,
+      message: 'Shuttle booking created successfully',
+      data: {
+        bookingId: booking.bookingId,
+        totalAmount: booking.totalAmount,
+        expiresAt: booking.expiresAt.toISOString(),
+      },
+    };
   }
 }
