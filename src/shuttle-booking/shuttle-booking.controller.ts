@@ -1,4 +1,5 @@
 // Shuttle booking controller
+// src\shuttle-booking\shuttle-booking.controller.ts
 import {
   Controller,
   Post,
@@ -8,6 +9,7 @@ import {
   Get,
   Param,
   Patch,
+  UseGuards,
 } from '@nestjs/common';
 import { ShuttleBookingService } from './shuttle-booking.service';
 import { CreateShuttleBookingDto } from './dto/create-shuttle-booking.dto';
@@ -15,6 +17,7 @@ import { ShuttleType } from './enums';
 import { BookingStatus } from '../common/enums/booking-status.enum';
 import { UpdateBookingStatusDto } from './dto/update-booking-status.dto';
 import type { AuthRequest } from '../common/types/auth-request.type';
+import { JwtAdminGuard } from '../admin/guards/jwt-auth.guard';
 
 @Controller('booking-form')
 export class ShuttleBookingController {
@@ -29,6 +32,7 @@ export class ShuttleBookingController {
    * GET /shuttle-bookings
    * Admin-style listing (filters supported)
    */
+  @UseGuards(JwtAdminGuard)
   @Get()
   async listAll(
     @Query('status') status?: BookingStatus,
@@ -54,6 +58,7 @@ export class ShuttleBookingController {
     return this.service.getById(id);
   }
 
+  @UseGuards(JwtAdminGuard)
   @Patch(':id/status')
   async updateStatus(
     @Param('id') id: string,

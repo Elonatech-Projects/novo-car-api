@@ -1,3 +1,4 @@
+// src\shuttle-booking\dto\create-shuttle-booking.dto.ts
 import {
   IsEnum,
   IsNotEmpty,
@@ -10,25 +11,25 @@ import { ShuttleType } from '../enums';
 
 export class CreateShuttleBookingDto {
   @IsEnum(ShuttleType)
-  shuttleType: ShuttleType;
+  shuttleType!: ShuttleType;
 
   @IsString()
   @IsNotEmpty()
-  pickupLocation: string;
+  pickupLocation!: string;
 
   @IsString()
   @IsNotEmpty()
-  dropoffLocation: string;
+  dropoffLocation!: string;
 
   @IsString()
-  bookingDate: string;
+  bookingDate!: string;
 
   @IsString()
-  pickupTime: string;
+  pickupTime!: string;
 
   @IsNumber()
   @Min(1)
-  numberOfPassengers: number;
+  numberOfPassengers!: number;
 
   @IsOptional()
   @IsString()

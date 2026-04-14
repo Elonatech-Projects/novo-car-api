@@ -100,25 +100,38 @@ export class ShuttleBookingService {
   async listAll(filters: {
     status?: BookingStatus;
     shuttleType?: ShuttleType;
+    page?: number;
+    limit?: number;
   }) {
-    const query: Record<string, any> = {};
+    const { status, shuttleType, page = 1, limit = 20 } = filters;
 
-    if (filters.status) {
-      query.status = filters.status;
-    }
+    const query: Record<string, unknown> = {};
 
-    if (filters.shuttleType) {
-      query.shuttleType = filters.shuttleType;
-    }
+    if (status) query.status = status;
+    if (shuttleType) query.shuttleType = shuttleType;
 
-    const bookings = await this.bookingModel
-      .find(query)
-      .sort({ createdAt: -1 });
+    const skip = (page - 1) * limit;
+
+    const [data, total] = await Promise.all([
+      this.bookingModel
+        .find(query)
+        .sort({ createdAt: -1 })
+        .skip(skip)
+        .limit(limit)
+        .lean(),
+
+      this.bookingModel.countDocuments(query),
+    ]);
 
     return {
       success: true,
-      count: bookings.length,
-      data: bookings,
+      meta: {
+        total,
+        page,
+        limit,
+        totalPages: Math.ceil(total / limit),
+      },
+      data,
     };
   }
 
@@ -157,6 +170,7 @@ export class ShuttleBookingService {
     };
   }
 
+  // Update Status
   async updateStatus(id: string, status: BookingStatus) {
     const booking = await this.bookingModel.findById(id);
 
@@ -164,7 +178,12 @@ export class ShuttleBookingService {
       throw new BadRequestException('Booking not found');
     }
 
-    booking.status = status;
+    if (!this.isValidStatusTransition(booking.status, status)) {
+      throw new BadRequestException(
+        `Invalid status transition from ${booking.status} to ${status}`,
+      );
+    }
+
     await this.changeStatus(booking, status);
 
     return {
@@ -189,5 +208,32 @@ export class ShuttleBookingService {
     });
 
     await booking.save();
+  }
+
+  private isValidStatusTransition(
+    current: BookingStatus,
+    next: BookingStatus,
+  ): boolean {
+    const validTransitions: Record<BookingStatus, BookingStatus[]> = {
+      [BookingStatus.PENDING_PAYMENT]: [
+        BookingStatus.PAID,
+        BookingStatus.CANCELLED,
+      ],
+      [BookingStatus.PAID]: [
+        BookingStatus.CONFIRMED,
+        BookingStatus.REFUND_REQUESTED,
+      ],
+      [BookingStatus.CONFIRMED]: [
+        BookingStatus.COMPLETED,
+        BookingStatus.CANCELLED,
+      ],
+      [BookingStatus.COMPLETED]: [],
+      [BookingStatus.CANCELLED]: [],
+      [BookingStatus.REFUND_REQUESTED]: [BookingStatus.REFUND_PENDING],
+      [BookingStatus.REFUND_PENDING]: [BookingStatus.REFUNDED],
+      [BookingStatus.REFUNDED]: [],
+    };
+
+    return validTransitions[current]?.includes(next) ?? false;
   }
 }

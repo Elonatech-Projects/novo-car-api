@@ -1,8 +1,6 @@
 import { Prop } from '@nestjs/mongoose';
 import { Schema, SchemaFactory } from '@nestjs/mongoose';
 import { Document } from 'mongoose';
-// import { Auth } from '../../auth/schema/auth-schema';
-// import { Auth } from '../../auth/schema/auth-schema';
 
 @Schema({ timestamps: true })
 export class CareerJobs extends Document {
@@ -29,6 +27,9 @@ export class CareerJobs extends Document {
 
   @Prop({ required: true })
   skills!: [string];
+
+  @Prop({ default: true })
+  isActive!: boolean;
 }
 
 export const CareerJobsSchema = SchemaFactory.createForClass(CareerJobs);

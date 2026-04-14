@@ -44,12 +44,10 @@ export class CityService {
     return this.cityModel.create({ name, code });
   }
 
-  async findAll(): Promise<City[]> {
-    return this.cityModel
-      .find({ isActive: true })
-      .sort({ name: 1 })
-      .lean()
-      .exec();
+  async findAll(includeInactive = false): Promise<City[]> {
+    const filter = includeInactive ? {} : { isActive: true };
+
+    return this.cityModel.find(filter).sort({ name: 1 }).lean().exec();
   }
 
   async updateCity(id: string, dto: CreateCityDto): Promise<City> {

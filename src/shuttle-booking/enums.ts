@@ -6,12 +6,3 @@ export enum ShuttleType {
   LUXURY = 'luxury',
   STANDARD = 'standard',
 }
-
-// export enum BookingStatus {
-//   PENDING = 'pending',
-//   CONFIRMED = 'confirmed',
-//   COMPLETED = 'completed',
-//   CANCELLED = 'cancelled',
-//   PENDING_PAYMENT = 'pending_payment',
-//   PAID = 'paid',
-// }

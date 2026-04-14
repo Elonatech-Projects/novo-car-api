@@ -13,6 +13,7 @@ import { JobApplicationsController } from './job-application.controller';
 
 import { MailModule } from '../mail/mail.module';
 import { NotificationsModule } from '../notifications/notifications.module';
+import { CloudinaryService } from '../common/cloudinary/cloudinary.service';
 
 @Module({
   imports: [
@@ -31,6 +32,6 @@ import { NotificationsModule } from '../notifications/notifications.module';
     ]),
   ],
   controllers: [JobApplicationsController],
-  providers: [JobApplicationsService],
+  providers: [JobApplicationsService, CloudinaryService],
 })
 export class JobApplicationsModule {}

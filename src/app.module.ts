@@ -7,7 +7,7 @@ import { ShuttleServicesModule } from './shuttle-services/shuttle-services.modul
 import { FleetManagementModule } from './fleet-management/fleet-management.module';
 import { CareerJobsModule } from './career-jobs/career-jobs.module';
 import { AdminModule } from './admin/admin.module';
-import { RoundTripModule } from './round-trip/round-trip.module';
+// import { RoundTripModule } from './round-trip/round-trip.module';
 import { OneWayModule } from './one-way/one-way.module';
 import { TripModule } from './shuttle-trip/trip.module';
 import { CarRentalsModule } from './car-rentals/car-rentals.module';
@@ -33,6 +33,8 @@ import { JobApplicationsModule } from './job-application/job-application.module'
 import { HealthModule } from './health/health.module';
 import { ChatModule } from './chat/chat.module';
 import { CityModule } from './city/city.module';
+// import { CloudinaryService } from './common/cloudinary/cloudinary.service';
+import { CloudinaryModule } from './common/cloudinary/cloudinary.module';
 
 @Module({
   imports: [
@@ -74,7 +76,7 @@ import { CityModule } from './city/city.module';
     FleetManagementModule,
     CareerJobsModule,
     AdminModule,
-    RoundTripModule,
+    // RoundTripModule,
     OneWayModule,
     TripModule,
     CarRentalsModule,
@@ -97,8 +99,9 @@ import { CityModule } from './city/city.module';
     HealthModule,
     ChatModule,
     CityModule,
+    CloudinaryModule,
   ],
   controllers: [],
   providers: [],
 })
-export class AppModule {} // ← REMOVE implements NestModule and configure method
+export class AppModule {}

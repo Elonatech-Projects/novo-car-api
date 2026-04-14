@@ -15,6 +15,7 @@ import {
 import { CreateJobApplicationDto } from './dto/create-job-application.dto';
 
 import { NotificationService } from '../notifications/notifications.service';
+import { CloudinaryService } from '../common/cloudinary/cloudinary.service';
 
 @Injectable()
 export class JobApplicationsService {
@@ -25,6 +26,8 @@ export class JobApplicationsService {
     private readonly applicationModel: Model<JobApplicationDocument>,
 
     private readonly notificationService: NotificationService,
+
+    private readonly cloudinaryService: CloudinaryService,
   ) {}
 
   /**
@@ -38,6 +41,9 @@ export class JobApplicationsService {
       throw new BadRequestException('CV file is required');
     }
 
+    const uploadResult = await this.cloudinaryService.uploadFile(cv);
+    // console.log('Uploading CV...', uploadResult);
+
     const adminEmail = process.env.ADMIN_EMAIL;
 
     if (!adminEmail) {
@@ -47,6 +53,7 @@ export class JobApplicationsService {
     const application = new this.applicationModel({
       ...dto,
       cvFileName: cv.originalname,
+      cvUrl: uploadResult.secure_url,
     });
 
     const savedApplication = await application.save();
@@ -141,13 +148,78 @@ export class JobApplicationsService {
    * Admin: Fetch all applications
    */
   async findAll(): Promise<JobApplication[]> {
-    return this.applicationModel.find().sort({ createdAt: -1 }).exec();
+    return this.applicationModel.find().sort({ createdAt: -1 }).lean().exec();
   }
 
   /**
    * Admin: Fetch single application
    */
   async findOne(id: string): Promise<JobApplication | null> {
-    return this.applicationModel.findById(id).exec();
+    return this.applicationModel.findById(id).lean().exec();
+  }
+
+  // Admin: Update application status (e.g. pending, reviewed, rejected, accepted)
+  async updateStatus(
+    id: string,
+    status: string,
+  ): Promise<JobApplication | null> {
+    const validStatuses = ['pending', 'reviewed', 'rejected', 'accepted'];
+
+    if (!validStatuses.includes(status)) {
+      throw new BadRequestException('Invalid status value');
+    }
+
+    return this.applicationModel
+      .findByIdAndUpdate(id, { status }, { new: true, runValidators: true })
+      .lean()
+      .exec();
+  }
+
+  // Admin: Search applications by jobId and status
+  async findByJobIdAndStatus(
+    jobId: string,
+    status: string,
+  ): Promise<JobApplication[]> {
+    return this.applicationModel
+      .find({
+        jobId,
+        status,
+      })
+      .sort({ createdAt: -1 })
+      .lean()
+      .exec();
+  }
+
+  // Admin: Search applications by applicant email
+  async findByEmail(email: string): Promise<JobApplication[]> {
+    return this.applicationModel
+      .find({
+        email,
+      })
+      .sort({ createdAt: -1 })
+      .lean()
+      .exec();
+  }
+
+  // Admin: Search applications by status
+  async findByStatus(status: string): Promise<JobApplication[]> {
+    return this.applicationModel
+      .find({
+        status,
+      })
+      .sort({ createdAt: -1 })
+      .lean()
+      .exec();
+  }
+
+  // Delete an application (admin only)
+  async delete(id: string): Promise<{ success: boolean; message: string }> {
+    const result = await this.applicationModel.findByIdAndDelete(id).exec();
+
+    if (!result) {
+      throw new BadRequestException('Application not found');
+    }
+
+    return { success: true, message: 'Application deleted successfully' };
   }
 }

@@ -1,8 +1,8 @@
 ﻿// src\job-application\schema\job-application.schema.ts
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
-import { Document } from 'mongoose';
+import { HydratedDocument } from 'mongoose';
 
-export type JobApplicationDocument = JobApplication & Document;
+export type JobApplicationDocument = HydratedDocument<JobApplication>;
 
 @Schema({ timestamps: true })
 export class JobApplication {

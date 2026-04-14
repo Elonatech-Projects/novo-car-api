@@ -2,9 +2,14 @@ import {
   BadRequestException,
   Body,
   Controller,
+  Delete,
+  Get,
+  Param,
   ParseFilePipeBuilder,
+  Patch,
   Post,
   UploadedFile,
+  UseGuards,
   UseInterceptors,
 } from '@nestjs/common';
 
@@ -12,6 +17,7 @@ import { FileInterceptor } from '@nestjs/platform-express';
 
 import { JobApplicationsService } from './job-application.service';
 import { CreateJobApplicationDto } from './dto/create-job-application.dto';
+import { JwtAdminGuard } from '../admin/guards/jwt-auth.guard';
 
 @Controller('job-applications')
 export class JobApplicationsController {
@@ -61,5 +67,27 @@ export class JobApplicationsController {
   ): Promise<{ success: boolean; message: string }> {
     await this.service.create(dto, cv);
     return { success: true, message: 'Job application submitted successfully' };
+  }
+
+  @Get()
+  @UseGuards(JwtAdminGuard)
+  async findAll() {
+    return this.service.findAll();
+  }
+
+  @Get(':id') async findOne(@Param('id') id: string) {
+    return this.service.findOne(id);
+  }
+
+  @Patch(':id/status')
+  @UseGuards(JwtAdminGuard)
+  updateStatus(@Param('id') id: string, @Body('status') status: string) {
+    return this.service.updateStatus(id, status);
+  }
+
+  @Delete(':id')
+  @UseGuards(JwtAdminGuard)
+  async delete(@Param('id') id: string) {
+    return this.service.delete(id);
   }
 }
