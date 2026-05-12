@@ -1,0 +1,56 @@
+<h2>New Login Detected 🔐</h2>
+
+<p>Hello {{name}},</p>
+
+<p>
+  We noticed a new login to your Novo Cars account.
+</p>
+
+<hr style="margin: 20px 0;" />
+
+<p><strong>Time:</strong> {{time}}</p>
+
+{{#if location}}
+<p><strong>Location:</strong> {{location}}</p>
+{{/if}}
+
+{{#if device}}
+<p><strong>Device:</strong> {{device}}</p>
+{{/if}}
+
+<hr style="margin: 20px 0;" />
+
+<p>
+  If this was you, no further action is needed.
+</p>
+
+<p>
+  If you don’t recognize this activity, we recommend that you reset your password immediately.
+</p>
+
+<p style="margin: 20px 0;">
+  <a 
+    href="{{frontendUrl}}/auth/forgot-password"
+    style="
+      display: inline-block;
+      padding: 12px 20px;
+      background-color: #000;
+      color: #fff;
+      text-decoration: none;
+      border-radius: 6px;
+      font-weight: 600;
+    "
+  >
+    Secure Your Account
+  </a>
+</p>
+
+<hr style="margin: 20px 0;" />
+
+<p style="font-size: 14px; color: #777;">
+  This notification helps keep your account secure.
+</p>
+
+<p>
+  — Novo Cars Team
+</p>

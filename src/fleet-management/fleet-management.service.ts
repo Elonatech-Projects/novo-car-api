@@ -1,39 +1,28 @@
-import { BadRequestException, Injectable } from '@nestjs/common';
-import { FleetManagement } from './schema/fleet-management-schema';
+import { BadRequestException, Injectable, Logger } from '@nestjs/common';
+import {
+  FleetManagement,
+  FleetManagementDocument,
+} from './schema/fleet-management-schema';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 import { Auth } from '../auth/schema/auth-schema';
 import { CreateFleetManagementDto } from './dto/create-fleet-management.dto';
 import { MailService } from '../mail/mail.service';
+import { NotificationService } from '../notifications/notifications.service';
 
 @Injectable()
 export class FleetManagementService {
+  private readonly logger = new Logger(FleetManagementService.name);
   constructor(
     @InjectModel(FleetManagement.name)
-    private fleetManagementModel: Model<FleetManagement>,
+    private fleetManagementModel: Model<FleetManagementDocument>,
     @InjectModel(Auth.name) private userModel: Model<Auth>,
+    private readonly notificationService: NotificationService,
     private readonly mailService: MailService,
   ) {}
 
   async createFleetManagement(dto: CreateFleetManagementDto) {
-    const {
-      name,
-      email,
-      pickup,
-      phone,
-      destination,
-      date,
-      time,
-      passengerCount,
-      cargoDescription,
-      specialRequests,
-    } = dto;
-
-    for (const [key, value] of Object.entries(dto)) {
-      if (!value) {
-        throw new BadRequestException(`${key} is required`);
-      }
-    }
+    const { date } = dto;
 
     // const user = await this.userModel.findById(userId).exec();
     // if (!user) {
@@ -52,32 +41,29 @@ export class FleetManagementService {
     }
 
     const fleetData = {
-      name,
-      email,
-      phone,
-      pickup,
-      destination,
-      date,
-      time,
-      passengerCount,
-      cargoDescription,
-      specialRequests,
-      // notes:
-      // notes,
-      // user: user._id,
+      ...dto,
+      cargoDescription: dto.cargoDescription || '',
+      specialRequests: dto.specialRequests || '',
     };
 
     const createdFleet = await this.fleetManagementModel.create(fleetData);
 
+    /* ---------- USER EMAIL -----------  */
     try {
-      await this.mailService.sendTemplateEmail(
-        dto.email,
-        'Fleet Management Request Received - Novo Cars',
-        'fleet-management',
-        { ...dto },
-      );
+      await this.notificationService.sendEmail({
+        to: dto.email,
+        subject: 'Fleet Management Request Received - Novo Cars',
+        template: 'fleet-management',
+        context: { ...dto },
+      });
+
+      this.logger.log('Fleet Management Email sent');
     } catch (error) {
-      console.error('Failed to send fleet management email:', error);
+      this.logger.error('Failed to send fleet management email to user', error);
+
+      if (error instanceof Error) {
+        this.logger.debug(error.stack);
+      }
     }
 
     const adminEmail = process.env.ADMIN_EMAIL || '';
@@ -99,5 +85,22 @@ export class FleetManagementService {
       success: true,
       createdFleet,
     };
+  }
+
+  async findAll(): Promise<FleetManagement[]> {
+    return this.fleetManagementModel
+      .find()
+      .sort({ createdAt: -1 })
+      .lean()
+      .exec();
+  }
+
+  async delete(id: string): Promise<{ success: boolean; message: string }> {
+    const result = await this.fleetManagementModel.findByIdAndDelete(id).exec();
+    if (!result) {
+      throw new BadRequestException('Management not found');
+    }
+
+    return { success: true, message: 'Fleet Management deleted successfully' };
   }
 }

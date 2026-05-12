@@ -29,6 +29,8 @@ export class CarRentalsService {
       name,
       email,
       phoneNumber,
+      pickupLocation,
+      dropoffLocation,
       pickupDate,
       dropoffDate,
       notes,
@@ -42,13 +44,15 @@ export class CarRentalsService {
       name,
       email,
       phoneNumber,
+      pickupLocation,
+      dropoffLocation,
       pickupDate,
       dropoffDate,
       notes,
     };
 
     for (const [key, value] of Object.entries(requiredFields)) {
-      if (!value) {
+      if (value === undefined || value === null) {
         throw new BadRequestException(`${key} is required`);
       }
     }
@@ -67,12 +71,6 @@ export class CarRentalsService {
       throw new BadRequestException('Dropoff must be after pickup date.');
     }
 
-    // Find user
-    // const user = await this.userModel.findById(userId).exec();
-    // if (!user) {
-    //   throw new BadRequestException('User not found');
-    // }
-
     // Build rental object
     const carRentalData = {
       bookingCategory,
@@ -80,6 +78,8 @@ export class CarRentalsService {
       name,
       email,
       phoneNumber,
+      pickupLocation,
+      dropoffLocation,
       pickupDate: pickup,
       dropoffDate: dropoff,
       notes,
@@ -102,7 +102,7 @@ export class CarRentalsService {
         },
       );
     } catch (error) {
-      console.error('Email failed:', error);
+      this.logger.error('Email failed:', error);
     }
 
     const adminEmail = this.configService.get<string>('ADMIN_EMAIL');

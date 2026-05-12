@@ -33,8 +33,17 @@ import { JobApplicationsModule } from './job-application/job-application.module'
 import { HealthModule } from './health/health.module';
 import { ChatModule } from './chat/chat.module';
 import { CityModule } from './city/city.module';
-// import { CloudinaryService } from './common/cloudinary/cloudinary.service';
 import { CloudinaryModule } from './common/cloudinary/cloudinary.module';
+import { CarModule } from './cars/cars.module';
+import { FleetvehicleModule } from './fleetvehicle/fleetvehicle.module';
+import { BookingRequestModule } from './booking-request/booking-request.module';
+// import { TypeOrmModule } from '@nestjs/typeorm';
+import { SubscriptionModule } from './subscription/subscription.module';
+import { NewsletterModule } from './newsletter/newsletter.module';
+import { SmsModule } from './notifications/sms/sms.module';
+import { AirportTransferModule } from './airport-transfer/airport-transfer.module';
+import { LeaseOptionsModule } from './lease-options/lease-options.module';
+import { CustomQuoteModule } from './custom-quote/custom-quote.module';
 
 @Module({
   imports: [
@@ -100,6 +109,15 @@ import { CloudinaryModule } from './common/cloudinary/cloudinary.module';
     ChatModule,
     CityModule,
     CloudinaryModule,
+    CarModule,
+    FleetvehicleModule,
+    BookingRequestModule,
+    SubscriptionModule,
+    NewsletterModule,
+    SmsModule,
+    AirportTransferModule,
+    LeaseOptionsModule,
+    CustomQuoteModule,
   ],
   controllers: [],
   providers: [],

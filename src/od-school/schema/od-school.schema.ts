@@ -2,13 +2,15 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import { Document } from 'mongoose';
 import { randomUUID } from 'crypto';
+import { HydratedDocument } from 'mongoose';
+import { isValidEmail, isValidPhone } from '../../common/utils/validators';
 
-export type ODSchoolDocument = ODSchool & Document;
+export type ODSchoolDocument = HydratedDocument<ODSchool>;
 
 @Schema({
   timestamps: true,
 })
-export class ODSchool extends Document {
+export class ODSchool {
   @Prop({
     required: [true, 'Name is required'],
     trim: true,
@@ -21,13 +23,20 @@ export class ODSchool extends Document {
     required: [true, 'Email is required'],
     lowercase: true,
     trim: true,
-    match: [/^\S+@\S+\.\S+$/, 'Please provide a valid email address'],
+    validate: {
+      validator: isValidEmail,
+      message: 'Please provide a valid email address',
+    },
   })
   email!: string;
 
   @Prop({
     required: [true, 'Phone number is required'],
     trim: true,
+    validate: {
+      validator: isValidPhone,
+      message: 'Please provide a valid phone number',
+    },
   })
   phone!: string;
 

@@ -1,8 +1,17 @@
-import { Body, Controller, Post } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Delete,
+  Get,
+  Param,
+  Post,
+  UseGuards,
+} from '@nestjs/common';
 // import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { FleetManagementService } from './fleet-management.service';
 import { CreateFleetManagementDto } from './dto/create-fleet-management.dto';
 import { Request } from 'express';
+import { JwtAdminGuard } from '../admin/guards/jwt-auth.guard';
 // import { JwtUser } from '../auth/jwt.types';
 
 @Controller('fleet-management')
@@ -19,5 +28,17 @@ export class FleetManagementController {
   ) {
     // const userId = req.user._id;
     return this.fleetManagementService.createFleetManagement(dto);
+  }
+
+  @Get()
+  @UseGuards(JwtAdminGuard)
+  async findAll() {
+    return this.fleetManagementService.findAll();
+  }
+
+  @Delete(':id')
+  @UseGuards(JwtAdminGuard)
+  async delete(@Param('id') id: string) {
+    return this.fleetManagementService.delete(id);
   }
 }

@@ -1,0 +1,70 @@
+{{!-- Shuttle Receipt Template --}}
+<div style="padding: 20px;">
+
+    <h2 style="margin-top:0;">Shuttle Booking Receipt</h2>
+
+    <p>Hello,</p>
+    <p>Your shuttle booking has been successfully confirmed. Here are your booking details:</p>
+
+    <!-- Booking Info -->
+    <h3>Booking Information</h3>
+    <table style="width: 100%; border-collapse: collapse;">
+        <tr>
+            <td><strong>Booking ID:</strong></td>
+            <td>{{bookingId}}</td>
+        </tr>
+        <tr>
+            <td><strong>Travel Date:</strong></td>
+            <td>{{formatDate travelDate}}</td>
+        </tr>
+        {{#if returnDate}}
+        <tr>
+            <td><strong>Return Date:</strong></td>
+            <td>{{formatDate returnDate}}</td>
+        </tr>
+        {{/if}}
+        <tr>
+            <td><strong>Seats Booked:</strong></td>
+            <td>{{seatCount}}</td>
+        </tr>
+        <tr>
+            <td><strong>Total Paid:</strong></td>
+            <td>₦{{amount}}</td>
+        </tr>
+        {{#if paymentReference}}
+        <tr>
+            <td><strong>Payment Reference:</strong></td>
+            <td>{{paymentReference}}</td>
+        </tr>
+        {{/if}}
+    </table>
+
+    <!-- Passenger List -->
+    <h3 style="margin-top: 30px;">Passenger Details</h3>
+    <table style="width: 100%; border-collapse: collapse; border: 1px solid #ddd;">
+        <thead style="background: #f5f5f5;">
+            <tr>
+                <th style="padding: 8px; border: 1px solid #ddd;">Name</th>
+                <th style="padding: 8px; border: 1px solid #ddd;">Email</th>
+                <th style="padding: 8px; border: 1px solid #ddd;">Phone</th>
+            </tr>
+        </thead>
+        <tbody>
+            {{#each passengers}}
+            <tr>
+                <td style="padding: 8px; border: 1px solid #ddd;">
+                    {{this.fullName}} {{#if this.isPrimary}}(Primary){{/if}}
+                </td>
+                <td style="padding: 8px; border: 1px solid #ddd;">{{this.email}}</td>
+                <td style="padding: 8px; border: 1px solid #ddd;">{{this.phone}}</td>
+            </tr>
+            {{/each}}
+        </tbody>
+    </table>
+
+    <!-- Footer -->
+    <p style="margin-top: 30px;">
+        Thank you for choosing <strong>Novo Cars</strong>.
+    </p>
+
+</div>

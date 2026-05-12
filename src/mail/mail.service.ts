@@ -10,6 +10,7 @@ import axios, { AxiosError } from 'axios';
 import * as fs from 'fs';
 import * as path from 'path';
 import * as Handlebars from 'handlebars';
+import { BookingRequest } from '../booking-request/entities/booking-request.entity';
 
 interface BrevoEmailPayload {
   sender: {
@@ -50,6 +51,43 @@ export class MailService {
 
     this.apiKey = apiKey;
     this.senderEmail = senderEmail;
+
+    // Register Handlebars helpers
+    Handlebars.registerHelper('capitalize', (value) => {
+      if (!value || typeof value !== 'string') return '';
+      return value.charAt(0).toUpperCase() + value.slice(1);
+    });
+
+    Handlebars.registerHelper('formatDate', (date: string) => {
+      if (!date) return '-';
+      const d = new Date(date);
+      return d.toLocaleDateString(undefined, {
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric',
+      });
+    });
+
+    Handlebars.registerHelper(
+      'default',
+      (value: unknown, fallback: unknown) => {
+        if (value === undefined || value === null || value === '') {
+          return typeof fallback === 'string' && fallback.length > 0
+            ? fallback
+            : '-';
+        }
+
+        if (typeof value === 'string') {
+          return value;
+        }
+
+        if (typeof value === 'number' || typeof value === 'boolean') {
+          return String(value);
+        }
+
+        return '-';
+      },
+    );
   }
 
   private compileTemplate(
@@ -68,12 +106,16 @@ export class MailService {
   }
 
   async sendTemplateEmail(
-    to: string,
+    to: string | string[],
     subject: string,
     templateName: string,
     context: Record<string, unknown>,
     attachments?: TemplateEmailAttachment[],
   ): Promise<void> {
+    // Normalize `to` to always be an array
+    // const emailAddresses = Array.isArray(to) ? to : [to];
+    const toDisplay = Array.isArray(to) ? to.join(', ') : to;
+
     try {
       const templatesDir = path.join(process.cwd(), 'src', 'mail', 'templates');
 
@@ -95,7 +137,9 @@ export class MailService {
           email: this.senderEmail,
           name: 'Novo Cars',
         },
-        to: [{ email: to }],
+        to: Array.isArray(to)
+          ? to.map((email) => ({ email }))
+          : [{ email: to }],
         subject,
         htmlContent: finalHtml,
         attachment: attachments?.length
@@ -116,7 +160,11 @@ export class MailService {
         timeout: 10000, // 10s fail-fast
       });
 
-      this.logger.log(`Email sent ? ${templateName} ? ${to}`);
+      this.logger.log(
+        `Email sent ? ${templateName} ? ${
+          Array.isArray(to) ? to.join(', ') : to
+        }`,
+      );
     } catch (error: unknown) {
       if (axios.isAxiosError(error)) {
         const axiosError = error as AxiosError<BrevoErrorResponse>;
@@ -125,7 +173,7 @@ export class MailService {
           axiosError.response?.data?.message ?? axiosError.message;
 
         this.logger.error(
-          `Brevo API error ? ${templateName} ? ${to}`,
+          `Brevo API error ? ${templateName} ? ${toDisplay}`,
           brevoMessage,
         );
 
@@ -136,16 +184,30 @@ export class MailService {
 
       if (error instanceof Error) {
         this.logger.error(
-          `Unexpected mail error ? ${templateName} ? ${to}`,
+          `Unexpected mail error ? ${templateName} ? ${toDisplay}`,
           error.message,
         );
       } else {
-        this.logger.error(`Unknown mail failure ? ${templateName} ? ${to}`);
+        this.logger.error(
+          `Unknown mail failure ? ${templateName} ? ${toDisplay}`,
+          JSON.stringify(error),
+        );
       }
 
       throw new InternalServerErrorException(
         'Unexpected email processing failure',
       );
     }
+  }
+
+  // mail.service.ts
+
+  sendBookingRequestToAdmin(booking: BookingRequest): void {
+    // temporary stub
+    console.log('Admin email:', booking);
+  }
+
+  sendBookingAcknowledgement(booking: BookingRequest): void {
+    console.log('User email:', booking);
   }
 }

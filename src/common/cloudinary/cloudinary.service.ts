@@ -25,12 +25,15 @@ export class CloudinaryService {
     });
   }
 
-  async uploadFile(file: Express.Multer.File): Promise<UploadApiResponse> {
+  async uploadFile(
+    file: Express.Multer.File,
+    options?: { folder?: string; resourceType?: 'image' | 'raw' },
+  ): Promise<UploadApiResponse> {
     return new Promise((resolve, reject) => {
       const stream = cloudinary.uploader.upload_stream(
         {
-          folder: 'job-applications',
-          resource_type: 'raw',
+          folder: options?.folder ?? 'novo-cars',
+          resource_type: options?.resourceType ?? 'image', // 🔥 default to image
         },
         (error, result) => {
           if (error) return reject(error);

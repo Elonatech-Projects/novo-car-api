@@ -1,18 +1,41 @@
-{{!-- Body Fleet Management --}}
-{{!-- src\mail\templates\fleet-management.hbs --}}
+<h2>🚚 Fleet Booking Request Received</h2>
 
+<p>Hello {{name}},</p>
 
-<h3>New Fleet Management Request</h3>
+<p>
+  Thank you for your request. We’ve received your fleet booking details and our team will reach out to you shortly to confirm availability, logistics, and final pricing.
+</p>
 
-<p><strong>Name:</strong> {{name}}</p>
-<p><strong>Email:</strong> {{email}}</p>
-<p><strong>Phone:</strong> {{phone}}</p>
+<hr/>
+
+<h3>📍 Your Request Summary</h3>
+
 <p><strong>Pickup:</strong> {{pickup}}</p>
 <p><strong>Destination:</strong> {{destination}}</p>
 <p><strong>Date:</strong> {{date}}</p>
 <p><strong>Time:</strong> {{time}}</p>
 <p><strong>Passengers:</strong> {{passengerCount}}</p>
-<p><strong>Cargo:</strong> {{cargoDescription}}</p>
-<p><strong>Special Requests:</strong></p>
-<p>{{specialRequests}}</p>
 
+{{#if cargoDescription}}
+  <p><strong>Cargo:</strong> {{cargoDescription}}</p>
+{{/if}}
+
+{{#if specialRequests}}
+  <p><strong>Special Requests:</strong></p>
+  <p>{{specialRequests}}</p>
+{{/if}}
+
+<hr/>
+
+<p>
+  📧 We will contact you via <strong>{{email}}</strong><br/>
+  📞 Or call you on <strong>{{phone}}</strong>
+</p>
+
+<p style="margin-top: 10px; font-size: 13px; color: #666;">
+  *Final pricing may vary based on distance, load requirements, and current market conditions.
+</p>
+
+<p style="margin-top: 20px;">
+  — Novo Fleet Team
+</p>

@@ -16,6 +16,7 @@ export class NotificationService {
       options.to,
       options.subject,
       options.template,
+      // options.receipttemplate,
       options.context,
       options.attachments,
     );

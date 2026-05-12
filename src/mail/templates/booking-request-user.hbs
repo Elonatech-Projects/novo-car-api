@@ -1,0 +1,38 @@
+{{!-- booking-request-user.hbs --}}
+<h2>Hi {{booking.firstName}},</h2>
+
+<p>
+  Thank you for choosing <strong>Novo Cars</strong>.
+</p>
+
+<p>
+  We’ve received your booking request and our team is currently reviewing the details.
+</p>
+
+<hr />
+
+<h3>📌 Your Request Summary</h3>
+<table>
+  <tr><td><strong>Service:</strong></td><td>{{capitalize booking.shuttleType}}</td></tr>
+  <tr><td><strong>Pickup:</strong></td><td>{{ default booking.pickupLocation "-"}}</td></tr>
+  <tr><td><strong>Dropoff:</strong></td><td>{{ default booking.dropoffLocation "-"}}</td></tr>
+  <tr><td><strong>Date:</strong></td><td>{{ formatDate booking.bookingDate }}</td></tr>
+  <tr><td><strong>Time:</strong></td><td>{{ default booking.pickupTime "-"}}</td></tr>
+</table>
+
+<hr />
+
+<p>
+  Our team will review your request and get back to you shortly with confirmation and next steps.
+</p>
+
+<p>
+  If you need to make any changes, feel free to reply to this email.
+</p>
+
+<br />
+
+<p>
+  Best regards,<br />
+  <strong>Novo Cars Team</strong>
+</p>

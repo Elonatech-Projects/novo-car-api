@@ -1,21 +1,63 @@
-import { Controller, Post, Body } from '@nestjs/common';
+import {
+  Controller,
+  Post,
+  Body,
+  HttpCode,
+  HttpStatus,
+  Request,
+  BadRequestException,
+  UseGuards,
+} from '@nestjs/common';
 import { AuthService } from './auth.service';
 import { CreateAuthDto } from './dto/create-auth-dto';
-import { LoginResponse } from './auth.service';
+import { AuthResponse, Response } from './auth.service';
+import { ResetPasswordDto } from './dto/resetpassword.dto';
+import { ChangePasswordDto } from './dto/change-password.dto';
+import { JwtAuthGuard } from './guards/jwt-auth.guard';
+import { Throttle } from '@nestjs/throttler';
+import { LoginDto } from './dto/login.dto';
+import { ForgotPasswordDto } from './dto/forgotpassword.dto';
 
 @Controller('auth')
 export class AuthController {
   constructor(private readonly authService: AuthService) {}
 
   @Post('create')
-  async createUser(@Body() dto: CreateAuthDto) {
+  async createUser(@Body() dto: CreateAuthDto): Promise<AuthResponse> {
     return this.authService.createUser(dto);
   }
 
+  @Throttle({ default: { ttl: 60_000, limit: 5 } }) // Limit to 5 requests per minute for this endpoint
   @Post('sign-in')
-  async signUsersIn(
-    @Body() body: { email: string; password: string },
-  ): Promise<LoginResponse> {
-    return this.authService.loginUser(body.email, body.password);
+  @HttpCode(HttpStatus.OK)
+  async signUsersIn(@Body() dto: LoginDto): Promise<AuthResponse> {
+    return this.authService.loginUser(dto);
+  }
+
+  @Throttle({ default: { ttl: 60_000, limit: 5 } })
+  @Post('reset-password')
+  async resetPassword(@Body() dto: ResetPasswordDto): Promise<Response> {
+    return this.authService.resetPassword(dto);
+  }
+
+  @Throttle({ default: { ttl: 60_000, limit: 5 } })
+  @Post('forgot-password')
+  @HttpCode(HttpStatus.OK)
+  async forgotPassword(@Body() dto: ForgotPasswordDto): Promise<Response> {
+    return this.authService.forgotPassword(dto);
+  }
+
+  @Throttle({ default: { ttl: 60_000, limit: 5 } })
+  @Post('change-password')
+  @HttpCode(HttpStatus.OK)
+  @UseGuards(JwtAuthGuard) // Ensure this route is protected and requires authentication
+  async changePassword(
+    @Body() dto: ChangePasswordDto,
+    @Request() req: { user?: { _id: string } },
+  ): Promise<Response> {
+    if (!req.user?._id) {
+      throw new BadRequestException('Unauthorized');
+    }
+    return this.authService.changePassword(dto);
   }
 }

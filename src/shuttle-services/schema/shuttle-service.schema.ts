@@ -1,3 +1,4 @@
+// Shuttle Service Schema
 // src\shuttle-services\schema\shuttle-service.schema.ts
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import { Document, Types } from 'mongoose';

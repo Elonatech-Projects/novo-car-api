@@ -1,0 +1,64 @@
+<h2>🚗 New Booking Request</h2>
+
+<p>A new booking request has been submitted.</p>
+
+<hr />
+
+<h3>📌 Service Details</h3>
+<table>
+  <tr><td><strong>Service Type:</strong></td><td>{{booking.shuttleType}}</td></tr>
+  <tr><td><strong>Pickup:</strong></td><td>{{booking.pickupLocation}}</td></tr>
+  <tr><td><strong>Dropoff:</strong></td><td>{{booking.dropoffLocation}}</td></tr>
+  <tr><td><strong>Date:</strong></td><td>{{booking.bookingDate}}</td></tr>
+  <tr><td><strong>Time:</strong></td><td>{{booking.pickupTime}}</td></tr>
+  <tr><td><strong>Passengers:</strong></td><td>{{booking.numberOfPassengers}}</td></tr>
+</table>
+
+<hr />
+
+<h3>👤 Customer Details</h3>
+<table>
+  <tr><td><strong>Name:</strong></td><td>{{booking.firstName}} {{booking.lastName}}</td></tr>
+  <tr><td><strong>Email:</strong></td><td>{{booking.email}}</td></tr>
+  <tr><td><strong>Phone:</strong></td><td>{{booking.phoneNumber}}</td></tr>
+</table>
+
+{{#if booking.specialRequests}}
+<hr />
+<h3>📝 Special Requests</h3>
+<p>{{booking.specialRequests}}</p>
+{{/if}}
+
+{{#if booking.airport}}
+<hr />
+<h3>✈️ Airport Details</h3>
+<table>
+  <tr><td><strong>Airport:</strong></td><td>{{booking.airport}}</td></tr>
+  <tr><td><strong>Flight:</strong></td><td>{{booking.flightNumber}}</td></tr>
+  <tr><td><strong>Terminal:</strong></td><td>{{booking.terminal}}</td></tr>
+</table>
+{{/if}}
+
+{{#if booking.weddingVenue}}
+<hr />
+<h3>💍 Wedding Details</h3>
+<table>
+  <tr><td><strong>Venue:</strong></td><td>{{booking.weddingVenue}}</td></tr>
+  <tr><td><strong>Date:</strong></td><td>{{booking.weddingDate}}</td></tr>
+  <tr><td><strong>Cars:</strong></td><td>{{booking.numberOfCars}}</td></tr>
+</table>
+{{/if}}
+
+{{#if booking.tourPackage}}
+<hr />
+<h3>🌍 Tour Details</h3>
+<table>
+  <tr><td><strong>Package:</strong></td><td>{{booking.tourPackage}}</td></tr>
+  <tr><td><strong>Duration:</strong></td><td>{{booking.tourDuration}}</td></tr>
+  <tr><td><strong>Accommodation:</strong></td><td>{{booking.accommodationType}}</td></tr>
+</table>
+{{/if}}
+
+<hr />
+
+<p><strong>Submitted:</strong> {{booking.createdAt}}</p>

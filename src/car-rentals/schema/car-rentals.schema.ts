@@ -1,3 +1,6 @@
+// Car Rentals Schema
+// Defines the Mongoose schema for car rentals, including all necessary fields and their types.
+// src\car-rentals\schema\car-rentals.schema.ts
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import { Document, Types } from 'mongoose';
 import { Auth } from '../../auth/schema/auth-schema';
@@ -23,12 +26,18 @@ export class UserCarForm extends Document {
   phoneNumber!: string;
 
   @Prop({ required: true })
+  pickupLocation!: string;
+
+  @Prop({ required: true })
+  dropoffLocation!: string;
+
+  @Prop({ required: true })
   pickupDate!: Date;
 
   @Prop({ required: true })
   dropoffDate!: Date;
 
-  @Prop({ required: true })
+  @Prop({ required: false })
   notes!: string;
 
   @Prop()

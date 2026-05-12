@@ -31,6 +31,8 @@ import {
 import { ShuttleBookingStatus } from '../common/enums/shuttle-booking.enum';
 import { Auth } from '../auth/schema/auth-schema';
 import { PaymentSource, PaystackVerifyResponse } from './types/paystack.types';
+// import { SmsService } from '../notifications/sms.service';
+import { SmsService } from '../notifications/sms/sms.service';
 
 // ─── Internal types ───────────────────────────────────────────────────────────
 
@@ -62,6 +64,8 @@ export class PaymentsService {
     private readonly notificationService: NotificationService,
     private readonly auditService: AuditService,
     private readonly configService: ConfigService,
+
+    private readonly smsService: SmsService,
   ) {}
 
   /* ============================================================
@@ -411,6 +415,8 @@ export class PaymentsService {
 
       await session.commitTransaction();
 
+      await this.notifyShuttleBookingSuccess(booking);
+
       this.logger.log(
         `Shuttle booking ${bookingId} confirmed — ₦${booking.totalAmount.toLocaleString()}`,
       );
@@ -491,6 +497,132 @@ export class PaymentsService {
     });
 
     this.logger.warn(`Late payment refunded for expired booking ${bookingId}`);
+  }
+
+  /**
+   * Handles ALL notification logic for a successful shuttle booking.
+   * Centralized to allow easy debugging, scaling (SMS, receipts), and reuse.
+   */
+  private async notifyShuttleBookingSuccess(
+    booking: ShuttleDocument,
+  ): Promise<void> {
+    // ── Fetch user (primary account holder) ───────────────────────────────
+    const user = await this.userModel
+      .findById(booking.userId)
+      .select('email name')
+      .lean();
+
+    // ── Extract passenger emails ──────────────────────────────────────────
+    const passengerEmails: string[] = booking.passengers
+      .map((p) => p.email)
+      .filter((email): email is string => Boolean(email));
+
+    // ── Admin / Ops recipients (from env) ─────────────────────────────────
+    const adminEmails: string[] = [
+      this.configService.get<string>('ADMIN_EMAIL'),
+      this.configService.get<string>('OPS_EMAIL'),
+    ].filter((email): email is string => Boolean(email));
+
+    if (!user) {
+      this.logger.warn(`User not found for booking ${booking._id.toString()}`);
+    }
+
+    // ── Merge + deduplicate all recipients ─────────────────────────────────
+    const recipients: string[] = Array.from(
+      new Set(
+        [user?.email, ...passengerEmails, ...adminEmails].filter(
+          (email): email is string => Boolean(email),
+        ),
+      ),
+    );
+
+    // ── Safety guard (never silently fail) ─────────────────────────────────
+    if (recipients.length === 0) {
+      this.logger.warn(
+        `No recipients found for shuttle booking ${booking._id.toString()}`,
+      );
+      return;
+    }
+
+    // ── Send email (single dispatch to all) ────────────────────────────────
+    try {
+      await this.notificationService.sendEmail({
+        to: recipients,
+        subject: 'Shuttle Booking is Confirmed',
+        template: 'shuttle-booking-confirmation',
+        context: {
+          bookingId: booking._id.toString(),
+          amount: booking.totalAmount,
+          travelDate: booking.travelDate,
+          returnDate: booking.returnDate,
+          seatCount: booking.seatCount,
+          passengers: booking.passengers,
+          paymentReference: booking.paymentReference,
+        },
+      });
+      // Novo Receipt
+      await this.notificationService.sendEmail({
+        to: recipients,
+        subject: 'Novo Shuttle Receipt',
+        template: 'shuttle-receipt',
+        context: {
+          bookingId: booking._id.toString(),
+          amount: booking.totalAmount.toLocaleString(),
+          travelDate: booking.travelDate,
+          returnDate: booking.returnDate,
+          seatCount: booking.seatCount,
+          passengers: booking.passengers,
+          paymentReference: booking.paymentReference,
+        },
+      });
+
+      this.logger.log(
+        `Notification sent for shuttle booking ${booking._id.toString()} to ${recipients.length} recipient(s)`,
+      );
+    } catch (error) {
+      this.logger.error(
+        `Failed to send notification for booking ${booking._id.toString()}`,
+        error instanceof Error ? error.stack : String(error),
+      );
+    }
+
+    // Messages
+    // ── Extract phone numbers ───────────────────────────────
+    const passengerPhones: string[] = booking.passengers
+      .map((p) => this.formatPhone(p.phone))
+      .filter((phone): phone is string => Boolean(phone));
+
+    // Optional: include primary user phone later if stored
+
+    if (passengerPhones.length > 0) {
+      try {
+        const message = `Novo Cars 🚐
+
+Your shuttle booking is confirmed.
+
+Booking ID: ${booking._id.toString()}
+Date: ${booking.travelDate}
+Seats: ${booking.seatCount}
+
+Thank you for choosing Novo Cars.`;
+
+        await this.smsService.sendSMS(passengerPhones, message);
+      } catch (error) {
+        this.logger.error(
+          `SMS notification failed for booking ${booking._id.toString()}`,
+          error instanceof Error ? error.stack : String(error),
+        );
+      }
+    }
+  }
+  private formatPhone(phone: string): string {
+    if (phone.startsWith('0')) {
+      return '234' + phone.slice(1);
+    }
+    if (phone.startsWith('+234')) {
+      return phone.replace('+', '');
+    }
+    return phone;
   }
 
   /* ============================================================

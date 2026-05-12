@@ -1,31 +1,40 @@
+// Auth Schema
+// src\auth\schema\auth-schema.ts
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
-import { Document } from 'mongoose';
+import { HydratedDocument } from 'mongoose';
 
+export type AuthDocument = HydratedDocument<Auth>;
 @Schema({ timestamps: true })
-export class Auth extends Document {
+export class Auth {
   @Prop({ required: true })
-  name: string;
+  name!: string;
 
   @Prop({
     required: true,
     unique: true,
   })
-  email: string;
+  email!: string;
 
   @Prop({
     required: true,
   })
-  password: string;
+  password!: string;
 
   @Prop({
     required: true,
   })
-  confirmPassword: string;
+  phoneNumber!: string;
 
-  @Prop({
-    required: true,
-  })
-  phoneNumber: string;
+  @Prop({ type: String, default: null })
+  resetPasswordToken?: string | null;
+
+  @Prop({ type: Date, default: null })
+  resetPasswordExpires?: Date | null;
+
+  @Prop({ type: Date, default: null })
+  lastLogin?: Date;
 }
 
 export const AuthSchema = SchemaFactory.createForClass(Auth);
+
+AuthSchema.index({ email: 1 }, { unique: true });

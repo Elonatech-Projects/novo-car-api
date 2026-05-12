@@ -6,9 +6,13 @@ export interface EmailAttachment {
 }
 
 export interface SendEmailOptions {
-  to: string;
+  to: string | string[];
   subject: string;
   template: string;
+  receiptTemplate?: string;
   context: Record<string, unknown>;
-  attachments?: EmailAttachment[];
+  attachments?: {
+    filename: string;
+    content: Buffer | string;
+  }[];
 }
