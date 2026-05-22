@@ -17,7 +17,7 @@ export class FleetManagement {
 
   @Prop({
     required: [true, 'Email is required'],
-    lowercase: true,
+    // lowercase: true,
     trim: true,
     validate: {
       validator: isValidEmail,

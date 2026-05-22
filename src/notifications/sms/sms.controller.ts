@@ -1,18 +1,18 @@
 // src/sms/sms.controller.ts
 
-import { Controller, Get } from '@nestjs/common';
+import { Controller, Post } from '@nestjs/common';
 import { SmsService } from './sms.service';
 
 @Controller('sms')
 export class SmsController {
   constructor(private readonly smsService: SmsService) {}
 
-  @Get('test')
+  @Post('send')
   async testSMS(): Promise<string> {
     console.log('SMS trigger hit');
     await this.smsService.sendSMS(
-      ['07017718494'], // <-- replace with your number
-      'Novo: Your verification code is 123456',
+      ['2347017718494'], // international format — no leading +
+      'Hello this is a messge sent by Novo Cars',
     );
 
     return 'SMS sent (check your phone)';

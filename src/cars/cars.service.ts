@@ -22,11 +22,11 @@ export class CarService {
     return this.carModel
       .find({ isAvailable: true })
       .lean()
-      .sort({ createdAt: -1 });
+      .sort({ createdAt: 1 });
   }
 
   async findAllAdmin(): Promise<Car[]> {
-    return this.carModel.find().lean().sort({ createdAt: -1 });
+    return this.carModel.find().lean().sort({ createdAt: 1 });
   }
 
   async findOne(id: string): Promise<Car> {

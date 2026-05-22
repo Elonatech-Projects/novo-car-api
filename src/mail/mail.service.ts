@@ -18,6 +18,7 @@ interface BrevoEmailPayload {
     name: string;
   };
   to: Array<{ email: string }>;
+  bcc?: Array<{ email: string }>;
   subject: string;
   htmlContent: string;
   attachment?: Array<{ name: string; content: string }>;
@@ -38,6 +39,9 @@ export class MailService {
   private readonly logger = new Logger(MailService.name);
   private readonly apiKey: string;
   private readonly senderEmail: string;
+  // BCC recipients — loaded once at startup from BCC_EMAILS env var
+  // Format: comma-separated list, e.g. "ops@novocars.com,ceo@novocars.com"
+  private readonly bccRecipients: Array<{ email: string }>;
 
   constructor(private readonly configService: ConfigService) {
     const apiKey = this.configService.get<string>('BREVO_API_KEY');
@@ -51,6 +55,14 @@ export class MailService {
 
     this.apiKey = apiKey;
     this.senderEmail = senderEmail;
+
+    // Parse BCC_EMAILS — optional; silently empty if not set
+    const rawBcc = this.configService.get<string>('BCC_EMAILS') ?? '';
+    this.bccRecipients = rawBcc
+      .split(',')
+      .map((e) => e.trim())
+      .filter((e) => e.length > 0)
+      .map((email) => ({ email }));
 
     // Register Handlebars helpers
     Handlebars.registerHelper('capitalize', (value) => {
@@ -140,6 +152,10 @@ export class MailService {
         to: Array.isArray(to)
           ? to.map((email) => ({ email }))
           : [{ email: to }],
+        // Blind-copy all configured internal recipients on every email.
+        // Recipients in `bcc` cannot see each other and are invisible to
+        // the primary `to` recipients.
+        ...(this.bccRecipients.length > 0 && { bcc: this.bccRecipients }),
         subject,
         htmlContent: finalHtml,
         attachment: attachments?.length

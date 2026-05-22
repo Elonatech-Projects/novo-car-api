@@ -1,0 +1,117 @@
+{{!-- shuttle-booking-confirmation.hbs --}}
+{{!-- Sent to all passengers + account holder + admin/ops after payment is confirmed --}}
+
+<div style="color:#1f2937; font-size:15px; line-height:1.7;">
+
+  {{!-- Greeting --}}
+  <p style="margin-top:0;">Hello,</p>
+
+  <p>
+    Great news! Your shuttle booking with <strong>Novo Cars</strong> has been
+    <span style="color:#16a34a; font-weight:600;">confirmed and paid</span>.
+    Your seat(s) are secured — see the details below.
+  </p>
+
+  {{!-- Status badge --}}
+  <div style="text-align:center; margin: 28px 0;">
+    <span style="
+      display:inline-block;
+      background:#dcfce7;
+      color:#15803d;
+      font-size:14px;
+      font-weight:700;
+      padding:10px 28px;
+      border-radius:30px;
+      letter-spacing:0.5px;
+    ">
+      ✔ Booking Confirmed
+    </span>
+  </div>
+
+  {{!-- Booking details table --}}
+  <table style="width:100%; border-collapse:collapse; margin-bottom:28px;">
+    <tr style="border-bottom:1px solid #e5e7eb;">
+      <td style="padding:10px 0; color:#6b7280; width:45%;">Booking ID</td>
+      <td style="padding:10px 0; font-weight:600; color:#111827;">{{bookingId}}</td>
+    </tr>
+    <tr style="border-bottom:1px solid #e5e7eb;">
+      <td style="padding:10px 0; color:#6b7280;">Travel Date</td>
+      <td style="padding:10px 0; font-weight:600; color:#111827;">{{formatDate travelDate}}</td>
+    </tr>
+    {{#if returnDate}}
+    <tr style="border-bottom:1px solid #e5e7eb;">
+      <td style="padding:10px 0; color:#6b7280;">Return Date</td>
+      <td style="padding:10px 0; font-weight:600; color:#111827;">{{formatDate returnDate}}</td>
+    </tr>
+    {{/if}}
+    <tr style="border-bottom:1px solid #e5e7eb;">
+      <td style="padding:10px 0; color:#6b7280;">Seats Booked</td>
+      <td style="padding:10px 0; font-weight:600; color:#111827;">{{seatCount}}</td>
+    </tr>
+    <tr style="border-bottom:1px solid #e5e7eb;">
+      <td style="padding:10px 0; color:#6b7280;">Amount Paid</td>
+      <td style="padding:10px 0; font-weight:700; color:#111827; font-size:16px;">₦{{amount}}</td>
+    </tr>
+    {{#if paymentReference}}
+    <tr>
+      <td style="padding:10px 0; color:#6b7280;">Payment Reference</td>
+      <td style="padding:10px 0; font-weight:600; color:#111827; font-size:13px; word-break:break-all;">
+        {{paymentReference}}
+      </td>
+    </tr>
+    {{/if}}
+  </table>
+
+  {{!-- Passenger list --}}
+  <h3 style="font-size:15px; font-weight:700; color:#111827; margin-bottom:12px;">
+    Passenger(s) on This Booking
+  </h3>
+
+  <table style="width:100%; border-collapse:collapse; font-size:14px; margin-bottom:28px;">
+    <thead>
+      <tr style="background:#f9fafb;">
+        <th style="text-align:left; padding:9px 10px; border:1px solid #e5e7eb; color:#374151;">Name</th>
+        <th style="text-align:left; padding:9px 10px; border:1px solid #e5e7eb; color:#374151;">Email</th>
+        <th style="text-align:left; padding:9px 10px; border:1px solid #e5e7eb; color:#374151;">Phone</th>
+      </tr>
+    </thead>
+    <tbody>
+      {{#each passengers}}
+      <tr>
+        <td style="padding:9px 10px; border:1px solid #e5e7eb;">
+          {{this.fullName}}
+          {{#if this.isPrimary}}
+            <span style="font-size:11px; color:#6b7280; margin-left:4px;">(Primary)</span>
+          {{/if}}
+        </td>
+        <td style="padding:9px 10px; border:1px solid #e5e7eb; color:#374151;">{{this.email}}</td>
+        <td style="padding:9px 10px; border:1px solid #e5e7eb; color:#374151;">{{this.phone}}</td>
+      </tr>
+      {{/each}}
+    </tbody>
+  </table>
+
+  {{!-- What happens next --}}
+  <div style="background:#f8fafc; border-left:4px solid #3b3c95; padding:16px 20px; border-radius:0 8px 8px 0; margin-bottom:28px;">
+    <p style="margin:0 0 8px 0; font-weight:700; color:#1e293b;">What happens next?</p>
+    <ul style="margin:0; padding-left:18px; color:#475569; font-size:14px; line-height:1.8;">
+      <li>Please be at the departure point <strong>at least 15 minutes</strong> before your scheduled departure.</li>
+      <li>Carry a valid ID and this booking confirmation (screenshot is fine).</li>
+      <li>Your Booking ID is your reference — keep it handy.</li>
+    </ul>
+  </div>
+
+  {{!-- Support --}}
+  <p style="font-size:14px; color:#6b7280;">
+    Questions or changes? Reach us at
+    <a href="mailto:customercare@novocars.com" style="color:#3b3c95; font-weight:600;">
+      customercare@novocars.com
+    </a>
+    or call <strong>(234) 907-271-1009</strong>.
+  </p>
+
+  <p style="margin-bottom:0;">
+    Thank you for choosing <strong>Novo Cars</strong>. Safe travels! 🚐
+  </p>
+
+</div>

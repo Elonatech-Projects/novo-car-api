@@ -44,6 +44,7 @@ import { SmsModule } from './notifications/sms/sms.module';
 import { AirportTransferModule } from './airport-transfer/airport-transfer.module';
 import { LeaseOptionsModule } from './lease-options/lease-options.module';
 import { CustomQuoteModule } from './custom-quote/custom-quote.module';
+import { NewsroomModule } from './newsroom/newsroom.module';
 
 @Module({
   imports: [
@@ -118,6 +119,7 @@ import { CustomQuoteModule } from './custom-quote/custom-quote.module';
     AirportTransferModule,
     LeaseOptionsModule,
     CustomQuoteModule,
+    NewsroomModule, // Newsroom articles — public fetch, admin create/edit/delete
   ],
   controllers: [],
   providers: [],

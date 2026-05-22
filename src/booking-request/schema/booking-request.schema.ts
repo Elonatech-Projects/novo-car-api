@@ -32,8 +32,11 @@ export class BookingRequest {
   @Prop({ default: 1 })
   numberOfPassengers: number;
 
-  @Prop()
+  @Prop({ required: false, trim: true })
   specialRequests?: string;
+
+  @Prop({ required: false, trim: true })
+  vehicleType?: string;
 
   // User Info
   @Prop({ required: true })
@@ -49,31 +52,31 @@ export class BookingRequest {
   phoneNumber: string;
 
   // Optional fields
-  @Prop()
+  @Prop({ required: false, trim: true })
   airport?: string;
 
-  @Prop()
+  @Prop({ required: false, trim: true })
   flightNumber?: string;
 
-  @Prop()
+  @Prop({ required: false, trim: true })
   terminal?: string;
 
-  @Prop()
+  @Prop({ required: false, trim: true })
   weddingVenue?: string;
 
-  @Prop()
+  @Prop({ required: false, trim: true })
   weddingDate?: string;
 
-  @Prop()
+  @Prop({ required: false, trim: true })
   numberOfCars?: number;
 
-  @Prop()
+  @Prop({ required: false, trim: true })
   tourPackage?: string;
 
-  @Prop()
+  @Prop({ required: false, trim: true })
   tourDuration?: number;
 
-  @Prop()
+  @Prop({ required: false, trim: true })
   accommodationType?: string;
 
   // Tracking

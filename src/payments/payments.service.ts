@@ -34,6 +34,26 @@ import { PaymentSource, PaystackVerifyResponse } from './types/paystack.types';
 // import { SmsService } from '../notifications/sms.service';
 import { SmsService } from '../notifications/sms/sms.service';
 
+// ─── Payment reference generator ─────────────────────────────────────────────
+// Produces a unique, human-readable payment reference: NVC-PAY-260519-K7M2P9
+// • NVC-PAY = Novo Cars payment prefix (distinguishes from booking refs)
+// • YYMMDD  = transaction date
+// • XXXXXX  = 6 random uppercase chars — excludes look-alike chars (I O 0 1)
+// Paystack requires each reference to be globally unique; 6 random chars from
+// a 32-char alphabet gives ~1 billion combinations per day — collision-safe.
+function generatePayRef(): string {
+  const now = new Date();
+  const yy = String(now.getFullYear()).slice(2);
+  const mm = String(now.getMonth() + 1).padStart(2, '0');
+  const dd = String(now.getDate()).padStart(2, '0');
+  const alphabet = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+  const suffix = Array.from(
+    { length: 6 },
+    () => alphabet[Math.floor(Math.random() * alphabet.length)],
+  ).join('');
+  return `NVC-PAY-${yy}${mm}${dd}-${suffix}`;
+}
+
 // ─── Internal types ───────────────────────────────────────────────────────────
 
 type PaystackMetadata = {
@@ -89,7 +109,7 @@ export class PaymentsService {
       throw new BadRequestException('Invalid booking price');
     }
 
-    const reference = `NOVO-${bookingId.slice(-8)}-${Date.now()}`;
+    const reference = generatePayRef();
 
     const response = await this.paystackService.initializeTransaction({
       email: booking.email,
@@ -183,8 +203,9 @@ export class PaymentsService {
 
     // ── Initialize new Paystack transaction ─────────────────────────────────
 
-    // We generate a unique reference for this transaction. The format includes a prefix, the last 6 characters of the booking ID for traceability, and a timestamp to ensure uniqueness. This reference is used to link the Paystack transaction back to our booking when we receive the webhook or do manual verification.
-    const reference = `NOVO-SERVICE-${bookingId.slice(-6)}-${Date.now()}`;
+    // Generate a unique Paystack reference for this transaction.
+    // Format: NVC-PAY-YYMMDD-XXXXXX (see generatePayRef above)
+    const reference = generatePayRef();
 
     const response = await this.paystackService.initializeTransaction({
       email: user.email,
@@ -544,15 +565,18 @@ export class PaymentsService {
       return;
     }
 
-    // ── Send email (single dispatch to all) ────────────────────────────────
+    const bookingIdStr = booking._id.toString();
+
+    // ── Email 1: Booking confirmation ──────────────────────────────────────
+    // Each email has its own try-catch so one failure does NOT block the other.
     try {
       await this.notificationService.sendEmail({
         to: recipients,
-        subject: 'Shuttle Booking is Confirmed',
+        subject: 'Your Shuttle Booking is Confirmed — Novo Cars',
         template: 'shuttle-booking-confirmation',
         context: {
-          bookingId: booking._id.toString(),
-          amount: booking.totalAmount,
+          bookingId: bookingIdStr,
+          amount: booking.totalAmount.toLocaleString(), // formatted e.g. "25,000"
           travelDate: booking.travelDate,
           returnDate: booking.returnDate,
           seatCount: booking.seatCount,
@@ -560,13 +584,24 @@ export class PaymentsService {
           paymentReference: booking.paymentReference,
         },
       });
-      // Novo Receipt
+      this.logger.log(
+        `Confirmation email sent for booking ${bookingIdStr} to ${recipients.length} recipient(s)`,
+      );
+    } catch (error) {
+      this.logger.error(
+        `Confirmation email failed for booking ${bookingIdStr}`,
+        error instanceof Error ? error.stack : String(error),
+      );
+    }
+
+    // ── Email 2: Receipt (separate try-catch — always attempts even if Email 1 fails) ──
+    try {
       await this.notificationService.sendEmail({
         to: recipients,
-        subject: 'Novo Shuttle Receipt',
+        subject: 'Novo Cars — Shuttle Booking Receipt',
         template: 'shuttle-receipt',
         context: {
-          bookingId: booking._id.toString(),
+          bookingId: bookingIdStr,
           amount: booking.totalAmount.toLocaleString(),
           travelDate: booking.travelDate,
           returnDate: booking.returnDate,
@@ -575,13 +610,10 @@ export class PaymentsService {
           paymentReference: booking.paymentReference,
         },
       });
-
-      this.logger.log(
-        `Notification sent for shuttle booking ${booking._id.toString()} to ${recipients.length} recipient(s)`,
-      );
+      this.logger.log(`Receipt email sent for booking ${bookingIdStr}`);
     } catch (error) {
       this.logger.error(
-        `Failed to send notification for booking ${booking._id.toString()}`,
+        `Receipt email failed for booking ${bookingIdStr}`,
         error instanceof Error ? error.stack : String(error),
       );
     }
@@ -669,6 +701,10 @@ Thank you for choosing Novo Cars.`;
       bookingId: new Types.ObjectId(bookingId),
       reference: paystackResponse.data.reference,
     });
+
+    // ── Notify passengers + account holder (same as the webhook path) ────────
+    // Previously missing — manual verify confirmed the payment but sent no emails.
+    await this.notifyShuttleBookingSuccess(booking);
 
     return { success: true };
   }

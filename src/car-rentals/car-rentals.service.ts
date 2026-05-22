@@ -35,6 +35,7 @@ export class CarRentalsService {
       dropoffDate,
       notes,
       subModel,
+      rentalDuration,
     } = dto;
 
     // Check required fields only
@@ -49,6 +50,7 @@ export class CarRentalsService {
       pickupDate,
       dropoffDate,
       notes,
+      // rentalDuration, // optional
     };
 
     for (const [key, value] of Object.entries(requiredFields)) {
@@ -84,6 +86,7 @@ export class CarRentalsService {
       dropoffDate: dropoff,
       notes,
       subModel: subModel || null, // optional
+      rentalDuration: rentalDuration || null, // optional
       // userId: user._id,
     };
 

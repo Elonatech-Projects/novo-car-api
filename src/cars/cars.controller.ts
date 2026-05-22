@@ -1,5 +1,6 @@
 // cars.controller.ts
 import {
+  BadRequestException,
   Body,
   Controller,
   Delete,
@@ -7,15 +8,24 @@ import {
   Param,
   Patch,
   Post,
+  UploadedFile,
   UseGuards,
+  UseInterceptors,
 } from '@nestjs/common';
 import { CarService } from './cars.service';
 import { CreateCarDto } from './dto/create-car.dto';
 import { UpdateCarDto } from './dto/update-car.dto';
 import { JwtAdminGuard } from '../admin/guards/jwt-auth.guard';
 import { CloudinaryService } from '../common/cloudinary/cloudinary.service';
-import { UploadedFile, UseInterceptors } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
+
+const ALLOWED_MIME_TYPES = [
+  'image/jpeg',
+  'image/jpg',
+  'image/png',
+  'image/webp',
+];
+const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5 MB
 
 @Controller('cars')
 export class CarController {
@@ -64,24 +74,35 @@ export class CarController {
   @UseGuards(JwtAdminGuard)
   @Post('upload')
   @UseInterceptors(
-    FileInterceptor('file', {
-      limits: { fileSize: 5 * 1024 * 1024 }, // 5MB
-      fileFilter: (req, file, cb) => {
-        if (!file.mimetype.startsWith('image/')) {
-          return cb(new Error('Only image files are allowed'), false);
+    FileInterceptor('image', {
+      limits: { fileSize: MAX_FILE_SIZE },
+      fileFilter: (_req, file, cb) => {
+        if (!ALLOWED_MIME_TYPES.includes(file.mimetype)) {
+          return cb(
+            new BadRequestException(
+              'Invalid file type. Only JPEG, PNG, and WebP images are accepted.',
+            ),
+            false,
+          );
         }
         cb(null, true);
       },
     }),
   )
   async uploadCarImage(@UploadedFile() file: Express.Multer.File) {
+    if (!file) {
+      throw new BadRequestException('No image file provided');
+    }
+
     const result = await this.cloudinaryService.uploadFile(file, {
-      folder: 'novo-cars',
+      folder: 'novo-cars/fleet',
       resourceType: 'image',
     });
 
     return {
-      url: result.secure_url, // THIS is what frontend needs
+      success: true,
+      url: result.secure_url,
+      publicId: result.public_id,
     };
   }
 }

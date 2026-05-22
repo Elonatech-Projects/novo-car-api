@@ -12,6 +12,24 @@ import { PricingService } from '../pricing/pricing.service';
 import { MapsService } from '../maps/maps.service';
 import { getSurgeMultiplier } from '../pricing/surge/surge.util';
 
+// ─── Booking reference generator ─────────────────────────────────────────────
+// Produces a human-readable, URL-safe reference such as: NVC-260519-K7M2
+// • NVC  = Novo Cars brand prefix
+// • YYMMDD = booking date (year last 2 digits, month, day)
+// • XXXX = 4 random uppercase chars — excludes look-alike chars (I O 0 1)
+function generateBookingRef(): string {
+  const now = new Date();
+  const yy = String(now.getFullYear()).slice(2);
+  const mm = String(now.getMonth() + 1).padStart(2, '0');
+  const dd = String(now.getDate()).padStart(2, '0');
+  const alphabet = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+  const suffix = Array.from(
+    { length: 4 },
+    () => alphabet[Math.floor(Math.random() * alphabet.length)],
+  ).join('');
+  return `NVC-${yy}${mm}${dd}-${suffix}`;
+}
+
 @Injectable()
 export class ShuttleBookingService {
   constructor(
@@ -44,8 +62,8 @@ export class ShuttleBookingService {
       surgeMultiplier, //Added Surge Multiplier here
     });
 
-    // 4️⃣ Generate reference
-    const bookingReference = `NOVO-${Date.now().toString().slice(-8)}`;
+    // 4️⃣ Generate reference — e.g. NVC-260519-K7M2
+    const bookingReference = generateBookingRef();
 
     // 5️⃣ Persist booking with LOCKED price
     const booking = await this.bookingModel.create({

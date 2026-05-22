@@ -45,6 +45,10 @@ export class CreateBookingRequestDto {
 
   @IsOptional()
   @IsString()
+  vehicleType?: string;
+
+  @IsOptional()
+  @IsString()
   specialRequests?: string;
 
   // User Info
