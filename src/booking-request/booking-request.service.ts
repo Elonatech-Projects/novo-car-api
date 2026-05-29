@@ -78,9 +78,9 @@ export class BookingRequestService {
 
     // SMS notification to internal ops team
     try {
-      const smsMessage = `New booking request from ${request.name} (${request.email}) for ${request.shuttleType} shuttle.`;
+      const smsMessage = `New booking request from ${request.firstName} (${request.email}) for ${request.shuttleType} shuttle by ${request.bookingDate} at ${request.pickupLocation}.`;
 
-      await this.smsService.sendSms(
+      await this.smsService.sendSMS(
         [this.companyPhone], // Novo Cars internal ops phone
         smsMessage,
         this.companySender,

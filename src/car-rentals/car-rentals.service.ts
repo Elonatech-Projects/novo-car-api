@@ -139,7 +139,7 @@ export class CarRentalsService {
         `Pickup: ${dto.pickupLocation} on ${pickup.toDateString()}\n` +
         `Dropoff: ${dto.dropoffLocation} on ${dropoff.toDateString()}`;
 
-      await this.smsService.sendSms(
+      await this.smsService.sendSMS(
         [this.companyPhone], // Novo Cars internal ops phone
         smsMessage,
         this.companySender,

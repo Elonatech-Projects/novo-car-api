@@ -85,12 +85,12 @@ export class CustomQuoteService {
         `Novo: New custom quote request!\n\n` +
         `From: ${dto.name}\n` +
         `Email: ${dto.email}\n` +
-        `Phone: ${dto.phoneNumber}\n` +
+        `Phone: ${dto.phone}\n` +
         `Company: ${dto.company}\n` +
         `Job Title: ${dto.jobTitle}\n` +
         `Requirements: ${dto.requirements}`;
 
-      await this.smsService.sendSms([this.companyPhone], smsMessage);
+      await this.smsService.sendSMS([this.companyPhone], smsMessage);
     } catch (error) {
       this.logger.error('Failed to send SMS', error);
     }

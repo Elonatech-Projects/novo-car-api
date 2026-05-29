@@ -65,7 +65,7 @@ export class ContactUsService {
         `Phone: ${dto.phone}\n` +
         `Message: ${dto.message}`;
 
-      await this.smsService.sendSms(
+      await this.smsService.sendSMS(
         [this.companyPhone],
         smsMessage,
         this.companySender,
