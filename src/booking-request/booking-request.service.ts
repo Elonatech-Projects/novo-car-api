@@ -11,10 +11,13 @@ import {
 import { CreateBookingRequestDto } from './dto/create-booking-request.dto';
 import { NotificationService } from '../notifications/notifications.service';
 import { ConfigService } from '@nestjs/config';
+import { SmsService } from '../notifications/sms/sms.service';
 
 @Injectable()
 export class BookingRequestService {
   private readonly logger = new Logger(BookingRequestService.name);
+  private readonly companySender: string;
+  private readonly companyPhone: string;
 
   constructor(
     @InjectModel(BookingRequest.name)
@@ -22,7 +25,13 @@ export class BookingRequestService {
 
     private readonly notificationService: NotificationService,
     private readonly configService: ConfigService,
-  ) {}
+    private readonly smsService: SmsService,
+  ) {
+    this.companySender =
+      this.configService.get<string>('TERMII_SENDER_ID_COMPANY') ?? 'Novo';
+    this.companyPhone =
+      this.configService.get<string>('NOVO_COMPANY_PHONE') ?? '2349072711009';
+  }
 
   async create(dto: CreateBookingRequestDto): Promise<void> {
     const requestDoc = await this.bookingModel.create({
@@ -66,5 +75,25 @@ export class BookingRequestService {
       .catch((err) => {
         this.logger.error('Failed to send booking acknowledgement email', err);
       });
+
+    // SMS notification to internal ops team
+    try {
+      const smsMessage = `New booking request from ${request.name} (${request.email}) for ${request.shuttleType} shuttle.`;
+
+      await this.smsService.sendSms(
+        [this.companyPhone], // Novo Cars internal ops phone
+        smsMessage,
+        this.companySender,
+      );
+
+      this.logger.log(
+        `Shuttle Booking request SMS notification sent to (${this.companyPhone})`,
+      );
+    } catch (error) {
+      this.logger.error(
+        'Failed to send shuttle booking request SMS notification',
+        error instanceof Error ? error.stack : String(error),
+      );
+    }
   }
 }

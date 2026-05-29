@@ -1,20 +1,25 @@
 // src/sms/sms.controller.ts
 
-import { Controller, Post } from '@nestjs/common';
+import { Body, Controller, Post } from '@nestjs/common';
 import { SmsService } from './sms.service';
+
+interface TestSmsDto {
+  phone: string;
+  message?: string;
+  sender?: string;
+}
 
 @Controller('sms')
 export class SmsController {
   constructor(private readonly smsService: SmsService) {}
 
-  @Post('send')
-  async testSMS(): Promise<string> {
-    console.log('SMS trigger hit');
-    await this.smsService.sendSMS(
-      ['2347017718494'], // international format — no leading +
-      'Hello this is a messge sent by Novo Cars',
-    );
+  // POST /sms/test
+  // Body: { "phone": "08012345678", "message": "optional", "sender": "optional" }
+  @Post('test')
+  async testSMS(@Body() body: TestSmsDto): Promise<object> {
+    const { phone, message, sender } = body;
 
-    return 'SMS sent (check your phone)';
+    const result = await this.smsService.testSend(phone, message, sender);
+    return result;
   }
 }

@@ -10,11 +10,13 @@ import { MongooseModule } from '@nestjs/mongoose';
 import { MailService } from '../mail/mail.service';
 import { MailModule } from '../mail/mail.module';
 import { NotificationsModule } from '../notifications/notifications.module';
+import { SmsModule } from '../notifications/sms/sms.module';
 
 @Module({
   imports: [
     MailModule,
     NotificationsModule,
+    SmsModule,
     MongooseModule.forFeature([
       { name: FleetManagement.name, schema: FleetManagementSchema },
       { name: Auth.name, schema: AuthSchema },

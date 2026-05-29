@@ -60,8 +60,15 @@ export class SmsService {
     return digits;
   }
 
-  async sendSMS(to: string[], message: string): Promise<void> {
+  async sendSMS(
+    to: string[],
+    message: string,
+    // Optional — pass a registered Termii sender name to override the default.
+    // e.g. 'Novo' for company-facing alerts, 'NovoNG' (default) for passengers.
+    senderOverride?: string,
+  ): Promise<void> {
     const normalisedNumbers = to.map((n) => this.normaliseNigerianNumber(n));
+    const sender = senderOverride ?? this.sender;
 
     try {
       const response = await axios.post<TermiiSmsResponse>(
@@ -72,7 +79,7 @@ export class SmsService {
             normalisedNumbers.length === 1
               ? normalisedNumbers[0]
               : normalisedNumbers.join(','),
-          from: this.sender,
+          from: sender,
           sms: message,
           type: 'plain',
           channel: this.channel,
@@ -110,5 +117,31 @@ export class SmsService {
 
       throw new InternalServerErrorException('SMS sending failed');
     }
+  }
+
+  // ─── Test helper ──────────────────────────────────────────────────────────
+  // Called by SmsController POST /sms/test — useful for verifying a sender ID
+  // is approved and the API key is valid before wiring into real flows.
+  async testSend(
+    phone: string,
+    message = 'Hello from Novo Cars. This is a test message.',
+    senderOverride?: string,
+  ): Promise<{
+    success: boolean;
+    to: string;
+    sender: string;
+    message: string;
+  }> {
+    const normalisedPhone = this.normaliseNigerianNumber(phone);
+    const sender = senderOverride ?? this.sender;
+
+    await this.sendSMS([normalisedPhone], message, senderOverride);
+
+    return {
+      success: true,
+      to: normalisedPhone,
+      sender,
+      message,
+    };
   }
 }

@@ -618,43 +618,39 @@ export class PaymentsService {
       );
     }
 
-    // Messages
-    // ── Extract phone numbers ───────────────────────────────
+    // ── SMS: confirmation to every passenger ──────────────────────────────────
+    // SmsService.normaliseNigerianNumber handles format conversion internally,
+    // so we pass the raw phone strings directly — no pre-processing needed.
     const passengerPhones: string[] = booking.passengers
-      .map((p) => this.formatPhone(p.phone))
+      .map((p) => p.phone)
       .filter((phone): phone is string => Boolean(phone));
-
-    // Optional: include primary user phone later if stored
 
     if (passengerPhones.length > 0) {
       try {
-        const message = `Novo Cars 🚐
+        // Use the human-readable payment reference (NVC-PAY-YYMMDD-XXXXXX)
+        // so passengers can quote it when contacting support.
+        const ref = booking.paymentReference ?? booking._id.toString();
 
-Your shuttle booking is confirmed.
+        const message =
+          `Novo Cars: Booking confirmed!\n\n` +
+          `Ref: ${ref}\n` +
+          `Date: ${booking.travelDate}\n` +
+          `Seats: ${booking.seatCount}\n\n` +
+          `Show this ref at boarding. Safe travels!`;
 
-Booking ID: ${booking._id.toString()}
-Date: ${booking.travelDate}
-Seats: ${booking.seatCount}
-
-Thank you for choosing Novo Cars.`;
-
+        // 'NovoNG' is the passenger-facing sender ID — use the default
         await this.smsService.sendSMS(passengerPhones, message);
+
+        this.logger.log(
+          `SMS sent to ${passengerPhones.length} passenger(s) for booking ${bookingIdStr}`,
+        );
       } catch (error) {
         this.logger.error(
-          `SMS notification failed for booking ${booking._id.toString()}`,
+          `SMS notification failed for booking ${bookingIdStr}`,
           error instanceof Error ? error.stack : String(error),
         );
       }
     }
-  }
-  private formatPhone(phone: string): string {
-    if (phone.startsWith('0')) {
-      return '234' + phone.slice(1);
-    }
-    if (phone.startsWith('+234')) {
-      return phone.replace('+', '');
-    }
-    return phone;
   }
 
   /* ============================================================

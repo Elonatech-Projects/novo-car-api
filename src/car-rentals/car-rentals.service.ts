@@ -7,10 +7,13 @@ import { Auth } from '../auth/schema/auth-schema';
 import { CarRentalsDto } from './dto/car-rentals.dto';
 import { MailService } from '../mail/mail.service';
 import { ConfigService } from '@nestjs/config';
+import { SmsService } from '../notifications/sms/sms.service';
 
 @Injectable()
 export class CarRentalsService {
   private readonly logger = new Logger(CarRentalsService.name);
+  private readonly companySender: string;
+  private readonly companyPhone: string;
 
   constructor(
     @InjectModel(UserCarForm.name)
@@ -19,7 +22,13 @@ export class CarRentalsService {
     private readonly userModel: Model<Auth>,
     private readonly mailService: MailService,
     private readonly configService: ConfigService,
-  ) {}
+    private readonly smsService: SmsService,
+  ) {
+    this.companySender =
+      this.configService.get<string>('TERMII_SENDER_ID_COMPANY') ?? 'Novo';
+    this.companyPhone =
+      this.configService.get<string>('NOVO_COMPANY_PHONE') ?? '2349072711009';
+  }
 
   async createCarRentals(dto: CarRentalsDto) {
     // Destructure all fields including optional
@@ -118,6 +127,30 @@ export class CarRentalsService {
         'New Car Rental Booking - Novo Cars',
         'car-rentals-admin',
         { ...dto },
+      );
+    }
+
+    try {
+      // SMS notification to internal ops team
+      const smsMessage =
+        `Novo: New car rental request!\n\n` +
+        `From: ${dto.name}\n` +
+        `Phone: ${dto.phoneNumber}\n` +
+        `Pickup: ${dto.pickupLocation} on ${pickup.toDateString()}\n` +
+        `Dropoff: ${dto.dropoffLocation} on ${dropoff.toDateString()}`;
+
+      await this.smsService.sendSms(
+        [this.companyPhone], // Novo Cars internal ops phone
+        smsMessage,
+        this.companySender,
+      );
+      this.logger.log(
+        `Car rental SMS notification sent to company (${this.companyPhone})`,
+      );
+    } catch (error) {
+      this.logger.error(
+        'Car Rentals SMS failed:',
+        error instanceof Error ? error.stack : String(error),
       );
     }
 

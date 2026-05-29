@@ -97,18 +97,18 @@ export class OdSchoolService {
           .catch((error) => this.logger.warn('Admin email failed', error));
       }
 
-      this.mailService
-        .sendTemplateEmail(
-          dto.email,
-          'Your Driving Lesson Booking Confirmation',
-          'od-school-student',
-          {
-            ...dto,
-            packageName: pkg.name,
-            bookingReference: savedBooking.bookingReference,
-          },
-        )
-        .catch((error) => this.logger.warn('Student email failed', error));
+      // this.mailService
+      //   .sendTemplateEmail(
+      //     dto.email,
+      //     'Your Driving Lesson Booking Confirmation',
+      //     'od-school-student',
+      //     {
+      //       ...dto,
+      //       packageName: pkg.name,
+      //       bookingReference: savedBooking.bookingReference,
+      //     },
+      //   )
+      //   .catch((error) => this.logger.warn('Student email failed', error));
 
       return savedBooking;
     } catch (error) {
