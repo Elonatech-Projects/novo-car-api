@@ -12,6 +12,7 @@ import { CreateBookingRequestDto } from './dto/create-booking-request.dto';
 import { NotificationService } from '../notifications/notifications.service';
 import { ConfigService } from '@nestjs/config';
 import { SmsService } from '../notifications/sms/sms.service';
+import { UpdateBookingRequestDto } from './dto/update-booking-request.dto';
 
 @Injectable()
 export class BookingRequestService {
@@ -95,5 +96,51 @@ export class BookingRequestService {
         error instanceof Error ? error.stack : String(error),
       );
     }
+  }
+
+  async getAll(): Promise<BookingRequest[]> {
+    return this.bookingModel
+      .find()
+      .sort({ createdAt: -1 }) // newest first
+      .lean()
+      .exec();
+  }
+
+  async delete(id: string): Promise<void> {
+    await this.bookingModel.findByIdAndDelete(id).exec();
+  }
+
+  async updateStatus(
+    id: string,
+    update: UpdateBookingRequestDto,
+  ): Promise<BookingRequest | null> {
+    const updated = await this.bookingModel
+      .findByIdAndUpdate(id, update, { new: true })
+      .lean()
+      .exec();
+
+    if (!updated) {
+      this.logger.warn(
+        `Booking request with ID ${id} not found for status update`,
+      );
+      return null;
+    }
+
+    this.logger.log(
+      `Updated booking request ${id} to status: ${updated.status}`,
+    );
+
+    return updated;
+  }
+
+  async remove(id: string): Promise<{ message: string }> {
+    const deleted = await this.bookingModel.findByIdAndDelete(id).exec();
+
+    if (!deleted) {
+      this.logger.warn(`Booking request with ID ${id} not found for deletion`);
+    } else {
+      this.logger.log(`Deleted booking request with ID ${id}`);
+    }
+    return { message: 'Booking request deleted successfully' };
   }
 }

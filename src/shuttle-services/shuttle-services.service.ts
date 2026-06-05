@@ -2,12 +2,14 @@
 import {
   BadRequestException,
   Injectable,
+  Logger,
   NotFoundException,
 } from '@nestjs/common';
 import { Connection, Model, Types, ClientSession } from 'mongoose';
 import { InjectConnection, InjectModel } from '@nestjs/mongoose';
 import { Shuttle, ShuttleDocument } from './schema/shuttle-service.schema';
 import { CreateShuttleServicesDto } from './dto/create-shuttle-services.dto';
+import { FindAllShuttleServicesDto } from './dto/find-all-shuttle-services.dto';
 import { Auth } from '../auth/schema/auth-schema';
 import { Schedule, ScheduleDocument } from '../schedule/schema/schedule.schema';
 import { getWeekDay } from '../common/utils/get-weekday.util';
@@ -38,6 +40,8 @@ interface SeatCheckParams {
 
 @Injectable()
 export class ShuttleServicesService {
+  private readonly logger = new Logger(ShuttleServicesService.name);
+
   constructor(
     @InjectModel(Shuttle.name)
     private readonly shuttleModel: Model<ShuttleDocument>,
@@ -381,5 +385,120 @@ export class ShuttleServicesService {
     const bookedSeats = result.length > 0 ? result[0].total : 0;
 
     return Math.max(schedule.capacity - bookedSeats, 0);
+  }
+
+  async getAllBookings(): Promise<Shuttle[]> {
+    return this.shuttleModel.find().sort({ createdAt: -1 }).lean().exec();
+  }
+  // ── ADMIN: fetch all bookings with filters ──────────────────────────────────
+
+  async findAll(filters: FindAllShuttleServicesDto): Promise<{
+    success: boolean;
+    total: number;
+    page: number;
+    pages: number;
+    data: ShuttleDocument[];
+  }> {
+    const {
+      isRoundTrip,
+      status,
+      seatCount,
+      travelDate,
+      page = 1,
+      limit = 20,
+    } = filters;
+
+    // Build the query object dynamically — only include fields that were passed
+    const query: Record<string, unknown> = {};
+    if (isRoundTrip !== undefined) query.isRoundTrip = isRoundTrip;
+    if (status) query.status = status;
+    if (seatCount !== undefined) query.seatCount = seatCount;
+    if (travelDate) query.travelDate = travelDate;
+
+    const skip = (page - 1) * limit;
+
+    // ↓ Sorted by createdAt descending — most recent bookings appear first
+    const [data, total] = await Promise.all([
+      this.shuttleModel
+        .find(query)
+        .sort({ createdAt: -1 }) // ← DESCENDING ORDER (newest first)
+        .skip(skip)
+        .limit(limit)
+        .lean(),
+      this.shuttleModel.countDocuments(query),
+    ]);
+
+    this.logger.log(
+      `Admin fetched shuttle bookings — filters: ${JSON.stringify(query)}, total: ${total}`,
+    );
+
+    return {
+      success: true,
+      total,
+      page,
+      pages: Math.ceil(total / limit),
+      data: data as unknown as ShuttleDocument[],
+    };
+  }
+
+  // ── ADMIN: delete a booking ─────────────────────────────────────────────────
+  //
+  // Safety guards prevent deletion of records needed for payment reconciliation:
+  //
+  //  RESERVED      → blocked. A payment may be in-flight (15-min window active).
+  //                  If Paystack debits the user but returns "failed", this record
+  //                  is the only proof of the transaction — do not delete.
+  //
+  //  PAID          → blocked. Payment confirmed. Must go through refund flow first.
+  //
+  //  REFUND_PENDING → blocked. Paystack refund is in progress — deleting now would
+  //                  break the reconciliation trail.
+  //
+  //  EXPIRED / REFUNDED / CANCELLED → safe to delete. No active payment involved.
+
+  async deleteBooking(
+    id: string,
+  ): Promise<{ success: boolean; message: string }> {
+    const booking = await this.shuttleModel.findById(id);
+
+    if (!booking) {
+      throw new NotFoundException('Booking not found');
+    }
+
+    // ── Guard: payment in-flight ─────────────────────────────────────────────
+    if (booking.status === ShuttleBookingStatus.RESERVED) {
+      throw new BadRequestException(
+        'Cannot delete a RESERVED booking — a payment may currently be in progress. ' +
+          'The reservation expires automatically after 15 minutes. Delete it once it shows as EXPIRED.',
+      );
+    }
+
+    // ── Guard: payment confirmed ─────────────────────────────────────────────
+    if (booking.status === ShuttleBookingStatus.PAID) {
+      throw new BadRequestException(
+        'Cannot delete a PAID booking. Payment has been confirmed. ' +
+          'If a refund is required, use the refund endpoint instead.',
+      );
+    }
+
+    // ── Guard: refund in progress ────────────────────────────────────────────
+    if (booking.status === ShuttleBookingStatus.REFUND_PENDING) {
+      throw new BadRequestException(
+        'Cannot delete a booking while a Paystack refund is pending. ' +
+          'Wait for the refund to complete (status: REFUNDED) before deleting.',
+      );
+    }
+
+    // Safe statuses: EXPIRED | REFUNDED | CANCELLED
+    await this.shuttleModel.findByIdAndDelete(id);
+
+    this.logger.log(
+      `Admin deleted shuttle booking ${id} (was ${booking.status})`,
+    );
+
+    return {
+      success: true,
+      message: `Booking deleted successfully`,
+    };
   }
 }

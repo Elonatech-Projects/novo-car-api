@@ -19,11 +19,12 @@ import { Type } from 'class-transformer';
 // ─── Passenger ────────────────────────────────────────────────────────────────
 
 export class ShuttlePassengerDto {
-  @IsString()
-  @IsNotEmpty()
+  @IsString({ message: 'Full name must be a string' })
+  @IsNotEmpty({ message: 'Full name is required' })
   fullName!: string;
 
   @IsEmail()
+  @IsNotEmpty({ message: 'Email is required ' })
   email!: string;
 
   @IsString()
