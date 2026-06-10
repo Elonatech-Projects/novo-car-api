@@ -1,12 +1,12 @@
 // main.ts
-process.env.NODE_TLS_REJECT_UNAUTHORIZED = '0';
-import { ValidationPipe } from '@nestjs/common';
+import { Logger, ValidationPipe } from '@nestjs/common';
 import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
 import * as bodyParser from 'body-parser';
 import 'reflect-metadata';
 
 async function bootstrap() {
+  const logger = new Logger('Bootstrap');
   const app = await NestFactory.create(AppModule);
 
   // 🔥 RAW BODY FOR WEBHOOK (MUST BE FIRST!)
@@ -51,8 +51,8 @@ async function bootstrap() {
 
   const port = process.env.PORT || 4000;
   await app.listen(port);
-  console.log(`✅ Server running on http://localhost:${port}`);
-  console.log(`📍 Webhook: http://localhost:${port}/payments/webhook`);
+  logger.log(`Server running on http://localhost:${port}`);
+  logger.log(`Webhook: http://localhost:${port}/payments/webhook`);
 }
 
 bootstrap();

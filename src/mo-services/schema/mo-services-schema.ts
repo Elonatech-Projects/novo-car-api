@@ -14,7 +14,7 @@ export type ManPowerDocument = ManPower & Document;
     // },
   },
 })
-export class ManPower extends Document {
+export class ManPower {
   @Prop({
     required: [true, 'Name is required'],
     trim: true,

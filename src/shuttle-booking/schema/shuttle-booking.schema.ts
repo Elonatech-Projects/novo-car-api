@@ -173,6 +173,6 @@ export type ShuttleBookingDocument = ShuttleBooking & Document;
 export const ShuttleBookingSchema =
   SchemaFactory.createForClass(ShuttleBooking);
 
+// Note: bookingReference unique index is declared via unique:true on the @Prop above — no duplicate needed here.
 // ShuttleBookingSchema.index({ paymentReference: 1 });
-ShuttleBookingSchema.index({ bookingReference: 1 });
 ShuttleBookingSchema.index({ status: 1 });

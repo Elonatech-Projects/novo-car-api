@@ -31,9 +31,10 @@ export class MoServicesService {
       });
 
       if (existingRequest) {
-        // You can decide if you want to allow multiple requests from same company
-        // For now, we'll just log it but still create the request
-        console.log('Similar request already exists for this company');
+        // Duplicate detected — log at warn level but still allow the request through
+        this.logger.warn(
+          `Duplicate manpower request detected for company: ${dto.companyName}`,
+        );
       }
 
       // Create and save the new manpower request
@@ -102,24 +103,6 @@ export class MoServicesService {
     return updatedRequest;
   }
 
-  private sendNotificationEmail(manPower: ManPower): void {
-    console.log('Sending notification email for:', manPower.email);
-
-    const emailContent = `
-    New Manpower Request Received:
-    
-    Name: ${manPower.name}
-    Email: ${manPower.email}
-    Phone: ${manPower.phoneNumber}
-    Company: ${manPower.companyName}
-    Industry: ${manPower.industry}
-    Staff Needed: ${manPower.staff}
-    Duration: ${manPower.duration}
-    
-    Additional Details:
-    ${manPower.details}
-  `;
-
-    console.log(emailContent);
-  }
+  // Notification is handled via mailService.sendTemplateEmail above.
+  // This method was a development stub and has been removed.
 }

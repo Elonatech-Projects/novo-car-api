@@ -1,5 +1,5 @@
 // src/bookings/bookings.service.ts
-import { BadRequestException, Injectable } from '@nestjs/common';
+import { BadRequestException, Injectable, Logger } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 import {
@@ -13,6 +13,7 @@ import { v4 as uuidv4 } from 'uuid';
 import { CreatePaystackBookingsDto } from './dto/create-paystack-bookings.dto';
 
 @Injectable()
+// TODO: implement this method properly when the paystack-bookings confirmation flow is finalized
 export class PaystackBookingsService {
   constructor(
     @InjectModel(PaystackBookings.name)
@@ -95,12 +96,15 @@ export class PaystackBookingsService {
     return booking;
   }
 
+  private readonly logger = new Logger(PaystackBookingsService.name);
+
   async sendConfirmationEmail(
     email: string,
     bookingReference: string,
   ): Promise<void> {
-    console.log(
-      `📧 Sending booking confirmation to ${email} for booking ${bookingReference}`,
+    // TODO: wire up a proper email template here
+    this.logger.warn(
+      `sendConfirmationEmail not yet implemented — would send to ${email} for ref ${bookingReference}`,
     );
   }
 }

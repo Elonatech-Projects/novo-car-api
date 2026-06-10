@@ -120,7 +120,7 @@ ODSchoolSchema.index(
 // Index for admin queries
 ODSchoolSchema.index({ createdAt: -1 });
 ODSchoolSchema.index({ packageId: 1, createdAt: -1 });
-ODSchoolSchema.index({ bookingReference: 1 }, { unique: true });
+// Note: bookingReference unique index is declared via unique:true on the @Prop above — no duplicate needed here.
 
 // Add virtual for booking status
 ODSchoolSchema.virtual('status').get(function (this: ODSchoolDocument) {

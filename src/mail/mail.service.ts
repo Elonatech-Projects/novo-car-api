@@ -216,14 +216,18 @@ export class MailService {
     }
   }
 
-  // mail.service.ts
-
+  // TODO: implement proper email templates for these when booking-request flow is finalized
   sendBookingRequestToAdmin(booking: BookingRequest): void {
-    // temporary stub
-    console.log('Admin email:', booking);
+    const bookingId = booking.id ?? 'unknown';
+    this.logger.warn(
+      `sendBookingRequestToAdmin called for booking ${bookingId} — not yet implemented`,
+    );
   }
 
   sendBookingAcknowledgement(booking: BookingRequest): void {
-    console.log('User email:', booking);
+    const bookingId = booking.id ?? 'unknown';
+    this.logger.warn(
+      `sendBookingAcknowledgement called for booking ${bookingId} — not yet implemented`,
+    );
   }
 }

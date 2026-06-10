@@ -636,7 +636,8 @@ export class PaymentsService {
           `Ref: ${ref}\n` +
           `Date: ${booking.travelDate}\n` +
           `Seats: ${booking.seatCount}\n\n` +
-          `Show this ref at boarding. Safe travels!`;
+          `Show this ref at boarding. Safe travels!\n` +
+          `Powered by Novo!`;
 
         // 'NovoNG' is the passenger-facing sender ID — use the default
         await this.smsService.sendSMS(passengerPhones, message);

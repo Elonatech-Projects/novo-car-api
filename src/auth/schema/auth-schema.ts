@@ -37,4 +37,4 @@ export class Auth {
 
 export const AuthSchema = SchemaFactory.createForClass(Auth);
 
-AuthSchema.index({ email: 1 }, { unique: true });
+// Note: email index is declared via unique:true on the @Prop above — no duplicate needed here.
