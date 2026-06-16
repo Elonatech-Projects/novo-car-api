@@ -25,6 +25,9 @@ import { NotificationsModule } from './notifications/notifications.module';
 // import { AuditService } from './audit/audit.service';
 import { AuditModule } from './audit/audit.module';
 import { ScheduleModule } from './schedule/schedule.module';
+// @nestjs/schedule — enables @Cron decorators app-wide (keep-alive + cleanup).
+// Aliased because the domain ScheduleModule above already uses the name.
+import { ScheduleModule as NestScheduleModule } from '@nestjs/schedule';
 import { MailModule } from './mail/mail.module';
 import { VerificationServicesModule } from './verification-services/verification-services.module';
 import { OdSchoolModule } from './od-school/od-school.module';
@@ -48,6 +51,7 @@ import { NewsroomModule } from './newsroom/newsroom.module';
 
 @Module({
   imports: [
+    NestScheduleModule.forRoot(),
     ThrottlerModule.forRoot({
       throttlers: [
         {

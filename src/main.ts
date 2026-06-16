@@ -32,8 +32,10 @@ async function bootstrap() {
       'http://localhost:3002',
       'https://novo-index-page-re-do.vercel.app',
       'https://novo.ng',
+      'https://www.novo.ng',
     ],
-    methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE'],
+    methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'Authorization'],
     credentials: true,
   });
 
