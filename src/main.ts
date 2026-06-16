@@ -35,7 +35,7 @@ async function bootstrap() {
       'https://www.novo.ng',
     ],
     methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
-    allowedHeaders: ['Content-Type', 'Authorization'],
+    allowedHeaders: ['Content-Type', 'Authorization', 'X-Request-ID'],
     credentials: true,
   });
 
