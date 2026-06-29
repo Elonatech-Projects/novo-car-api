@@ -14,8 +14,17 @@ import {
   IsString,
   Matches,
   Min,
+  ValidateNested,
 } from 'class-validator';
 import { WeekDay } from '../../common/utils/get-weekday.util';
+
+// A bookable plan/fare for a route (single, round, weekly, monthly, …).
+export class SchedulePlanDto {
+  @IsString() @IsNotEmpty() key!: string;
+  @IsString() @IsNotEmpty() label!: string;
+  @Type(() => Number) @IsNumber() @Min(1) trips!: number;
+  @Type(() => Number) @IsNumber() @Min(0) price!: number;
+}
 
 export class CreateScheduleDto {
   // @IsString()
@@ -56,4 +65,18 @@ export class CreateScheduleDto {
   @IsString() @IsOptional() plateNumber?: string;
 
   @IsArray() @IsOptional() @IsString({ each: true }) specificDates?: string[];
+
+  // ── NShuttle ──
+  // Display name for the route (admin-editable). _id is still used internally.
+  @IsString() @IsOptional() name?: string;
+
+  @IsString() @IsOptional() vehicle?: string;
+
+  @IsArray() @IsOptional() @IsString({ each: true }) vehicleImages?: string[];
+
+  @IsArray()
+  @IsOptional()
+  @ValidateNested({ each: true })
+  @Type(() => SchedulePlanDto)
+  plans?: SchedulePlanDto[];
 }

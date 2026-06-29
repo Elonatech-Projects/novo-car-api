@@ -23,6 +23,14 @@ interface CreatedBookingResult {
   expiresAt: Date;
 }
 
+// A bookable NShuttle plan as stored on a Schedule route.
+interface RoutePlan {
+  key: string;
+  label: string;
+  trips: number;
+  price: number;
+}
+
 /**
  * Internal shape used only inside this service.
  * Keeps getAvailableSeats unambiguous about which leg it is checking.
@@ -100,6 +108,7 @@ export class ShuttleServicesService {
       seatCount,
       passengers,
       isRoundTrip,
+      planKey,
     } = payload;
 
     // ── 1. Basic validation ──────────────────────────────────────────────────
@@ -283,6 +292,26 @@ export class ShuttleServicesService {
       totalAmount += returnSchedule.basePrice * seatCount;
     }
 
+    // ── 7b. NShuttle plan pricing override ───────────────────────────────────
+    // If a plan was chosen, price the booking at the plan's fixed bundle price
+    // (× seatCount) instead of the per-trip basePrice. The plan must exist on
+    // the outbound schedule — we never trust a price from the client.
+    let selectedPlan: RoutePlan | undefined;
+
+    if (planKey) {
+      // `lean()` returns loosely-typed docs, so cast the plans array explicitly.
+      const routePlans: RoutePlan[] = Array.isArray(outboundSchedule.plans)
+        ? (outboundSchedule.plans as RoutePlan[])
+        : [];
+      selectedPlan = routePlans.find((p) => p.key === planKey);
+      if (!selectedPlan) {
+        throw new BadRequestException(
+          `Plan "${planKey}" is not available for this route`,
+        );
+      }
+      totalAmount = selectedPlan.price * seatCount;
+    }
+
     // ── 8. Create booking ────────────────────────────────────────────────────
 
     const expiresAt = new Date(now.getTime() + 15 * 60 * 1000); // 15 min reservation window
@@ -303,6 +332,13 @@ export class ShuttleServicesService {
           userId: new Types.ObjectId(userId),
           seatCount,
           totalAmount,
+          ...(selectedPlan
+            ? {
+                planKey: selectedPlan.key,
+                planLabel: selectedPlan.label,
+                planTrips: selectedPlan.trips,
+              }
+            : {}),
           status: ShuttleBookingStatus.RESERVED,
           expiresAt,
           passengers,

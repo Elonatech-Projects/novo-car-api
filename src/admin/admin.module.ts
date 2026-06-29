@@ -6,6 +6,8 @@ import { PassportModule } from '@nestjs/passport';
 import { JwtModule } from '@nestjs/jwt';
 import { MongooseModule } from '@nestjs/mongoose';
 import { Admin, AdminSchema } from './schema/admin-schema';
+import { SuperAdminGuard } from './guards/super-admin.guard';
+import { NotificationsModule } from '../notifications/notifications.module';
 // Same secret the JWT strategy verifies with (process.env.SECRET_KEY).
 import { JWT_SECRET } from '../auth/jwt.constants';
 
@@ -17,9 +19,10 @@ import { JWT_SECRET } from '../auth/jwt.constants';
       signOptions: { expiresIn: '7d' },
     }),
     MongooseModule.forFeature([{ name: Admin.name, schema: AdminSchema }]),
+    NotificationsModule,
   ],
   controllers: [AdminController],
-  providers: [AdminService, JwtStrategy],
+  providers: [AdminService, JwtStrategy, SuperAdminGuard],
 
   exports: [AdminService, JwtModule, PassportModule],
 })

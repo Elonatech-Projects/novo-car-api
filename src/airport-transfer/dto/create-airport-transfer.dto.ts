@@ -3,6 +3,7 @@
 import {
   IsEmail,
   IsNotEmpty,
+  IsOptional,
   IsString,
   IsDateString,
   MinLength,
@@ -37,6 +38,20 @@ export class CreateAirportTransferDto {
   @IsString()
   category!: string;
 
+  // Pickup time + locations added per website feedback.
+  @IsOptional()
+  @IsString()
+  pickupTime?: string;
+
+  @IsOptional()
+  @IsString()
+  pickupLocation?: string;
+
+  @IsOptional()
+  @IsString()
+  dropoffLocation?: string;
+
+  @IsOptional()
   @IsString()
   notes?: string;
 }

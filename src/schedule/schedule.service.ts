@@ -95,6 +95,10 @@ export class ScheduleService {
       basePrice,
       operatingDays,
       isActive,
+      name,
+      vehicle,
+      vehicleImages,
+      plans,
     } = payload;
 
     if (from === to) {
@@ -112,6 +116,7 @@ export class ScheduleService {
 
     const schedule = await this.scheduleModel.create({
       code,
+      name,
       from,
       to,
       departureTime,
@@ -119,6 +124,9 @@ export class ScheduleService {
       basePrice,
       operatingDays,
       isActive: isActive ?? true,
+      vehicle,
+      vehicleImages: vehicleImages ?? [],
+      plans: plans ?? [],
     });
 
     return schedule;
@@ -129,6 +137,15 @@ export class ScheduleService {
     return this.scheduleModel
       .find()
       .sort({ createdAt: -1 }) // newest first
+      .lean()
+      .exec();
+  }
+
+  // Public: list all ACTIVE routes for the NShuttle rider page (no auth).
+  async findActiveRoutes(): Promise<Schedule[]> {
+    return this.scheduleModel
+      .find({ isActive: true })
+      .sort({ createdAt: -1 })
       .lean()
       .exec();
   }

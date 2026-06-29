@@ -42,6 +42,18 @@ export class Shuttle {
   @Prop({ required: true })
   totalAmount!: number;
 
+  // ── NShuttle plan (optional) ──────────────────────────────────────────────
+  // When a rider buys a plan (weekly/monthly bundle) instead of a single trip,
+  // these record which plan was purchased. Null for plain single/round trips.
+  @Prop({ required: false })
+  planKey?: string;
+
+  @Prop({ required: false })
+  planLabel?: string;
+
+  @Prop({ required: false })
+  planTrips?: number;
+
   @Prop({
     type: String,
     enum: ShuttleBookingStatus,

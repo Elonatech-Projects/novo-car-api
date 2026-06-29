@@ -53,6 +53,9 @@ export class UserCarForm extends Document {
   @Prop({ required: true })
   pickupDate!: Date;
 
+  @Prop({ required: false, trim: true })
+  pickupTime?: string;
+
   @Prop({ required: true })
   dropoffDate!: Date;
 

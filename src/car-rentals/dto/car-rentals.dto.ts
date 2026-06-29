@@ -38,4 +38,6 @@ export class CarRentalsDto {
   @IsString() @IsOptional() subModel?: string;
   @IsString() @IsOptional() rentalDuration?: string;
   @IsString() @IsOptional() price?: string;
+  // Pickup time added per website feedback (Booking a Ride form).
+  @IsString() @IsOptional() pickupTime?: string;
 }

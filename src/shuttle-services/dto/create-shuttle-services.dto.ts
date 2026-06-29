@@ -7,7 +7,7 @@ import {
   IsMongoId,
   IsNotEmpty,
   IsNumber,
-  // IsOptional,
+  IsOptional,
   IsString,
   Matches,
   Min,
@@ -90,4 +90,10 @@ export class CreateShuttleServicesDto {
   @ValidateNested({ each: true })
   @Type(() => ShuttlePassengerDto)
   passengers!: ShuttlePassengerDto[];
+
+  // NShuttle plan selection. When present, the booking is priced at the plan's
+  // price (looked up on the outbound schedule) instead of basePrice × seats.
+  @IsOptional()
+  @IsString()
+  planKey?: string;
 }

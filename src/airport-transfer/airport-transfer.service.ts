@@ -3,9 +3,15 @@ import {
   InternalServerErrorException,
   Logger,
 } from '@nestjs/common';
+import { InjectModel } from '@nestjs/mongoose';
+import { Model } from 'mongoose';
 import { CreateAirportTransferDto } from './dto/create-airport-transfer.dto';
 import { NotificationService } from '../notifications/notifications.service';
 import { ConfigService } from '@nestjs/config';
+import {
+  AirportTransfer,
+  AirportTransferDocument,
+} from './schema/airport-transfer.schema';
 
 // In-memory duplicate guard — resets on server restart (acceptable for now)
 const recentBookings = new Map<string, number>();
@@ -16,13 +22,14 @@ export class AirportTransferService {
   private readonly logger = new Logger(AirportTransferService.name);
 
   constructor(
+    @InjectModel(AirportTransfer.name)
+    private readonly airportTransferModel: Model<AirportTransferDocument>,
     private readonly notificationService: NotificationService,
     private readonly configService: ConfigService,
   ) {}
 
   async create(dto: CreateAirportTransferDto) {
     try {
-      const booking = { ...dto, createdAt: new Date() };
       const key = `${dto.email}-${dto.date}-${dto.airport}-${dto.vehicle}`;
       const now = Date.now();
 
@@ -36,7 +43,16 @@ export class AirportTransferService {
 
       recentBookings.set(key, now);
 
-      await this.sendNotifications(booking);
+      // Persist the booking so admins can review it later.
+      const saved = await this.airportTransferModel.create({
+        ...dto,
+        email: dto.email.toLowerCase().trim(),
+        status: 'pending_review',
+      });
+
+      this.logger.log(`Airport transfer booking saved: ${saved._id}`);
+
+      await this.sendNotifications(saved.toObject());
 
       return { message: 'Airport transfer booking received successfully' };
     } catch (error) {
@@ -50,7 +66,16 @@ export class AirportTransferService {
     }
   }
 
-  private async sendNotifications(booking: CreateAirportTransferDto) {
+  // Admin — list all airport transfer bookings (newest first).
+  async getAll(): Promise<AirportTransfer[]> {
+    return this.airportTransferModel
+      .find()
+      .sort({ createdAt: -1 })
+      .lean()
+      .exec();
+  }
+
+  private async sendNotifications(booking: AirportTransfer) {
     // User confirmation email
     await this.notificationService.sendEmail({
       to: booking.email,
@@ -70,7 +95,9 @@ export class AirportTransferService {
 
     if (!adminEmail) {
       // Config missing — log and skip rather than throwing so user booking still succeeds
-      this.logger.warn('ADMIN_EMAIL not configured — skipping admin notification for airport transfer');
+      this.logger.warn(
+        'ADMIN_EMAIL not configured — skipping admin notification for airport transfer',
+      );
       return;
     }
 

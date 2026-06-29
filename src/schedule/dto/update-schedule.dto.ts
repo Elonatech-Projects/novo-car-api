@@ -1,5 +1,14 @@
-import { IsNumber, IsOptional, IsString, Min } from 'class-validator';
+import {
+  IsArray,
+  IsNumber,
+  IsOptional,
+  IsString,
+  Min,
+  ValidateNested,
+} from 'class-validator';
+import { Type } from 'class-transformer';
 import { WeekDay } from '../../common/utils/get-weekday.util';
+import { SchedulePlanDto } from './create-schedule.dto';
 
 export class UpdateScheduleDto {
   @IsOptional()
@@ -18,4 +27,23 @@ export class UpdateScheduleDto {
 
   @IsOptional()
   operatingDays?: WeekDay[];
+
+  @IsOptional()
+  @IsString()
+  name?: string;
+
+  @IsOptional()
+  @IsString()
+  vehicle?: string;
+
+  @IsOptional()
+  @IsArray()
+  @IsString({ each: true })
+  vehicleImages?: string[];
+
+  @IsOptional()
+  @IsArray()
+  @ValidateNested({ each: true })
+  @Type(() => SchedulePlanDto)
+  plans?: SchedulePlanDto[];
 }

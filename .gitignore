@@ -54,3 +54,8 @@ pids
 
 # Diagnostic reports (https://nodejs.org/api/report.html)
 report.[0-9]*.[0-9]*.[0-9]*.[0-9]*.json
+
+# Internal technical documentation (kept out of version control)
+BACKEND.md
+BACKEND.docx
+Technical Documentation for Novo.pdf

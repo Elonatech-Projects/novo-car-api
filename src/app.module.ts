@@ -48,6 +48,7 @@ import { AirportTransferModule } from './airport-transfer/airport-transfer.modul
 import { LeaseOptionsModule } from './lease-options/lease-options.module';
 import { CustomQuoteModule } from './custom-quote/custom-quote.module';
 import { NewsroomModule } from './newsroom/newsroom.module';
+import { InterstateBookingModule } from './interstate-booking/interstate-booking.module';
 
 @Module({
   imports: [
@@ -124,6 +125,7 @@ import { NewsroomModule } from './newsroom/newsroom.module';
     LeaseOptionsModule,
     CustomQuoteModule,
     NewsroomModule, // Newsroom articles — public fetch, admin create/edit/delete
+    InterstateBookingModule, // Interstate car-rental quote requests
   ],
   controllers: [],
   providers: [],

@@ -25,6 +25,12 @@ export class ScheduleController {
     return this.scheduleService.searchSchedules(query);
   }
 
+  // Public — lists all active routes for the NShuttle rider page.
+  @Get('routes')
+  async routes(): Promise<Schedule[]> {
+    return this.scheduleService.findActiveRoutes();
+  }
+
   // Admin-only endpoint to create a new schedule.
   @UseGuards(JwtAdminGuard)
   @Post()
