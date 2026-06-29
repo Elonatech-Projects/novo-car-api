@@ -52,7 +52,11 @@ export class AirportTransferService {
 
       this.logger.log(`Airport transfer booking saved: ${saved._id}`);
 
-      await this.sendNotifications(saved.toObject());
+      try {
+        await this.sendNotifications(saved.toObject());
+      } catch {
+        this.logger.error('Failed to send booking email');
+      }
 
       return { message: 'Airport transfer booking received successfully' };
     } catch (error) {
