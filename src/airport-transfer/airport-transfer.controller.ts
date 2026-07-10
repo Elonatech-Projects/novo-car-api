@@ -1,6 +1,15 @@
-import { Controller, Post, Get, Body, UseGuards } from '@nestjs/common';
+import {
+  Controller,
+  Post,
+  Get,
+  Patch,
+  Param,
+  Body,
+  UseGuards,
+} from '@nestjs/common';
 import { AirportTransferService } from './airport-transfer.service';
 import { CreateAirportTransferDto } from './dto/create-airport-transfer.dto';
+import { UpdateAirportTransferStatusDto } from './dto/update-airport-transfer-status.dto';
 import { Throttle } from '@nestjs/throttler';
 import { JwtAdminGuard } from '../admin/guards/jwt-auth.guard';
 
@@ -22,5 +31,16 @@ export class AirportTransferController {
   @Get()
   getAll() {
     return this.airportTransferService.getAll();
+  }
+
+  // Admin — update review status. Transitioning to 'approved' sends the
+  // customer a confirmation email.
+  @UseGuards(JwtAdminGuard)
+  @Patch(':id/status')
+  updateStatus(
+    @Param('id') id: string,
+    @Body() dto: UpdateAirportTransferStatusDto,
+  ) {
+    return this.airportTransferService.updateStatus(id, dto.status);
   }
 }

@@ -19,6 +19,7 @@ interface BrevoEmailPayload {
   };
   to: Array<{ email: string }>;
   bcc?: Array<{ email: string }>;
+  replyTo?: { email: string };
   subject: string;
   htmlContent: string;
   attachment?: Array<{ name: string; content: string }>;
@@ -39,6 +40,11 @@ export class MailService {
   private readonly logger = new Logger(MailService.name);
   private readonly apiKey: string;
   private readonly senderEmail: string;
+  // Reply-To address — BREVO_SENDER_EMAIL is a noreply@ inbox nobody reads, so
+  // every outgoing email sets Reply-To separately to a monitored mailbox.
+  // Falls back to customercare@novocars.com (Novo's canonical contact address)
+  // if BREVO_REPLY_TO_EMAIL isn't set.
+  private readonly replyToEmail: string;
   // BCC recipients — loaded once at startup from BCC_EMAILS env var
   // Format: comma-separated list, e.g. "ops@novocars.com,ceo@novocars.com"
   private readonly bccRecipients: Array<{ email: string }>;
@@ -55,6 +61,9 @@ export class MailService {
 
     this.apiKey = apiKey;
     this.senderEmail = senderEmail;
+    this.replyToEmail =
+      this.configService.get<string>('BREVO_REPLY_TO_EMAIL') ??
+      'customercare@novocars.com';
 
     // Parse BCC_EMAILS — optional; silently empty if not set
     const rawBcc = this.configService.get<string>('BCC_EMAILS') ?? '';
@@ -156,6 +165,7 @@ export class MailService {
         // Recipients in `bcc` cannot see each other and are invisible to
         // the primary `to` recipients.
         ...(this.bccRecipients.length > 0 && { bcc: this.bccRecipients }),
+        replyTo: { email: this.replyToEmail },
         subject,
         htmlContent: finalHtml,
         attachment: attachments?.length

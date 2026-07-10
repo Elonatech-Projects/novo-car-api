@@ -6,14 +6,26 @@ import {
   Injectable,
 } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
-import { Model } from 'mongoose';
+import { Model, Types } from 'mongoose';
 import { CreateScheduleDto } from './dto/create-schedule.dto';
 import { Schedule, ScheduleDocument } from './schema/schedule.schema';
 import { SearchScheduleDto } from './dto/search-schedule.dto';
 import { getWeekDay } from '../common/utils/get-weekday.util';
 import { City, CityDocument } from '../city/schema/city.schema';
 import { UpdateSchedulePayload } from './types/UpdateSchedulePayload';
+import {
+  Shuttle,
+  ShuttleDocument,
+} from '../shuttle-services/schema/shuttle-service.schema';
+import { ShuttleBookingStatus } from '../common/enums/shuttle-booking.enum';
 // import { CityDocument } from '../city/schema/city.schema';
+
+// A Schedule with a live seatsAvailable figure attached for a specific date.
+// Kept separate from the base Schedule type so admin-facing reads (findAll,
+// findActiveRoutes) aren't forced to carry a field that only makes sense
+// alongside a date.
+export type ScheduleWithAvailability = Schedule & { seatsAvailable: number };
+
 @Injectable()
 export class ScheduleService {
   constructor(
@@ -22,16 +34,61 @@ export class ScheduleService {
 
     @InjectModel(City.name)
     private readonly cityModel: Model<CityDocument>,
+
+    @InjectModel(Shuttle.name)
+    private readonly shuttleModel: Model<ShuttleDocument>,
   ) {}
+
+  /**
+   * Live seats remaining for one schedule on one calendar date.
+   *
+   * Counts RESERVED + PAID bookings that use this schedule for that date —
+   * on EITHER leg (a schedule can be someone's outbound trip and someone
+   * else's return trip on the same date, and both compete for the same
+   * physical seats). This is intentionally broader than the per-leg check
+   * ShuttleServicesService.getAvailableSeats does during booking creation
+   * (which only needs to check the one role it's being booked as); a
+   * read-only "how many seats are left" answer needs both.
+   */
+  async getAvailableSeats(scheduleId: string, date: string): Promise<number> {
+    const schedule = await this.scheduleModel.findById(scheduleId).lean();
+    if (!schedule) return 0;
+
+    const result = await this.shuttleModel.aggregate<{ total: number }>([
+      {
+        $match: {
+          $or: [
+            {
+              'schedule.outbound': new Types.ObjectId(scheduleId),
+              travelDate: date,
+            },
+            {
+              'schedule.return': new Types.ObjectId(scheduleId),
+              returnDate: date,
+            },
+          ],
+          status: {
+            $in: [ShuttleBookingStatus.RESERVED, ShuttleBookingStatus.PAID],
+          },
+        },
+      },
+      { $group: { _id: null, total: { $sum: '$seatCount' } } },
+    ]);
+
+    const bookedSeats = result.length > 0 ? result[0].total : 0;
+    return Math.max(schedule.capacity - bookedSeats, 0);
+  }
 
   /**
    * Search active schedules by route and date.
    *
-   * Returns matching schedules for the frontend to display.
-   * Seat availability per schedule is NOT calculated here —
-   * that happens server-side at booking creation time via getAvailableSeats.
+   * Returns matching schedules with a live `seatsAvailable` figure for
+   * departureDate — the static `capacity` field alone isn't enough for
+   * riders to know if a trip is actually bookable.
    */
-  async searchSchedules(query: SearchScheduleDto): Promise<Schedule[]> {
+  async searchSchedules(
+    query: SearchScheduleDto,
+  ): Promise<ScheduleWithAvailability[]> {
     const { from, to, departureDate } = query;
 
     // ✅ Prevent invalid route
@@ -72,7 +129,7 @@ export class ScheduleService {
     const weekday = getWeekDay(departureDate);
 
     // ✅ Query
-    return this.scheduleModel
+    const schedules = await this.scheduleModel
       .find({
         from,
         to,
@@ -81,6 +138,24 @@ export class ScheduleService {
       })
       .lean()
       .exec();
+
+    // ✅ Attach live seat availability for departureDate to each match
+    //
+    // .lean() skips Mongoose hydration, so schema defaults (e.g. vehicleImages:
+    // []) never get applied — schedules created before that field existed come
+    // back with it simply missing, not an empty array. Normalize here so
+    // consumers can always safely index into these arrays.
+    return Promise.all(
+      schedules.map(async (schedule) => ({
+        ...schedule,
+        vehicleImages: schedule.vehicleImages ?? [],
+        plans: schedule.plans ?? [],
+        seatsAvailable: await this.getAvailableSeats(
+          schedule._id.toString(),
+          departureDate,
+        ),
+      })),
+    );
   }
 
   /**

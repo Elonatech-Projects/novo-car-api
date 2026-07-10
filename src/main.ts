@@ -25,15 +25,29 @@ async function bootstrap() {
   app.use(bodyParser.urlencoded({ extended: true }));
 
   // CORS
+  // Production/staging origins are an explicit allow-list. Any
+  // http://localhost:<port> origin is always allowed on top of that — local
+  // dev ports change constantly, and CORS here only guards browser-side
+  // cookie/session access; this API auths via JWT bearer tokens, not
+  // cookies, so a permissive localhost allowance carries no real risk.
+  // (Deliberately NOT gated on NODE_ENV — this project runs with
+  // NODE_ENV=production even for local dev, so that flag isn't a reliable
+  // signal here.)
+  const allowedOrigins = [
+    'https://novo-index-page-re-do.vercel.app',
+    'https://novo.ng',
+    'https://www.novo.ng',
+    'https://nshuttle.vercel.app/',
+  ];
+
   app.enableCors({
-    origin: [
-      'http://localhost:3000',
-      'http://localhost:3001',
-      'http://localhost:3002',
-      'https://novo-index-page-re-do.vercel.app',
-      'https://novo.ng',
-      'https://www.novo.ng',
-    ],
+    origin: (origin, callback) => {
+      // No Origin header — same-origin requests, curl, server-to-server, etc.
+      if (!origin) return callback(null, true);
+      if (allowedOrigins.includes(origin)) return callback(null, true);
+      if (/^http:\/\/localhost:\d+$/.test(origin)) return callback(null, true);
+      callback(new Error(`CORS blocked for origin: ${origin}`));
+    },
     methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
     allowedHeaders: ['Content-Type', 'Authorization', 'X-Request-ID'],
     credentials: true,

@@ -5,6 +5,17 @@ import { HydratedDocument } from 'mongoose';
 
 export type AirportTransferDocument = HydratedDocument<AirportTransfer>;
 
+// Admin-driven status workflow. 'approved' triggers a confirmation email to
+// the customer — see AirportTransferService.updateStatus().
+export const AIRPORT_TRANSFER_STATUSES = [
+  'pending_review',
+  'approved',
+  'rejected',
+  'completed',
+] as const;
+
+export type AirportTransferStatus = (typeof AIRPORT_TRANSFER_STATUSES)[number];
+
 @Schema({ timestamps: true })
 export class AirportTransfer {
   // Customer
@@ -47,8 +58,8 @@ export class AirportTransfer {
   notes?: string;
 
   // Tracking — admin updates this as they process the booking.
-  @Prop({ default: 'pending_review' })
-  status!: string;
+  @Prop({ default: 'pending_review', enum: AIRPORT_TRANSFER_STATUSES })
+  status!: AirportTransferStatus;
 }
 
 export const AirportTransferSchema =

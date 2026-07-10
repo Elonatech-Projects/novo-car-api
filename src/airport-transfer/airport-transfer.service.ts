@@ -2,6 +2,7 @@ import {
   Injectable,
   InternalServerErrorException,
   Logger,
+  NotFoundException,
 } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
@@ -11,6 +12,7 @@ import { ConfigService } from '@nestjs/config';
 import {
   AirportTransfer,
   AirportTransferDocument,
+  AirportTransferStatus,
 } from './schema/airport-transfer.schema';
 
 // In-memory duplicate guard — resets on server restart (acceptable for now)
@@ -52,11 +54,15 @@ export class AirportTransferService {
 
       this.logger.log(`Airport transfer booking saved: ${saved._id}`);
 
-      try {
-        await this.sendNotifications(saved.toObject());
-      } catch {
-        this.logger.error('Failed to send booking email');
-      }
+      // Fire-and-forget — the booking is already persisted, so a mail outage or
+      // a hanging SMTP call (e.g. no Brevo key locally) must NEVER block or fail
+      // the request. Notifications run in the background.
+      void this.sendNotifications(saved.toObject()).catch((err: unknown) => {
+        this.logger.error(
+          'Airport transfer notifications failed',
+          err instanceof Error ? err.stack : String(err),
+        );
+      });
 
       return { message: 'Airport transfer booking received successfully' };
     } catch (error) {
@@ -77,6 +83,53 @@ export class AirportTransferService {
       .sort({ createdAt: -1 })
       .lean()
       .exec();
+  }
+
+  // Admin — update the review status. Only fires the approval email on the
+  // transition INTO 'approved' — not on every save while already approved
+  // (e.g. an admin editing another field later shouldn't re-notify).
+  async updateStatus(
+    id: string,
+    status: AirportTransferStatus,
+  ): Promise<AirportTransfer> {
+    const booking = await this.airportTransferModel.findById(id);
+
+    if (!booking) {
+      throw new NotFoundException('Airport transfer booking not found');
+    }
+
+    const wasApproved = booking.status === 'approved';
+    booking.status = status;
+    await booking.save();
+
+    this.logger.log(`Airport transfer ${id} status set to: ${status}`);
+
+    if (status === 'approved' && !wasApproved) {
+      const saved = booking.toObject();
+      void this.notificationService
+        .sendEmail({
+          to: saved.email,
+          subject: 'Your Airport Transfer Has Been Approved',
+          template: 'airport-booking-approved',
+          context: {
+            name: saved.name,
+            airport: saved.airport,
+            terminal: saved.terminal,
+            date: saved.date,
+            pickupTime: saved.pickupTime,
+            pickupLocation: saved.pickupLocation,
+            vehicle: saved.vehicle,
+          },
+        })
+        .catch((err: unknown) => {
+          this.logger.error(
+            'Failed to send airport transfer approval email',
+            err instanceof Error ? err.stack : String(err),
+          );
+        });
+    }
+
+    return booking.toObject();
   }
 
   private async sendNotifications(booking: AirportTransfer) {

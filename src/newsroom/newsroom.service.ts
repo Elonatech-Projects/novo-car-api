@@ -136,6 +136,29 @@ export class NewsroomService {
     };
   }
 
+  // ─── ADMIN: Fetch every article regardless of publish state ─────────────────
+  // getAllArticles() above filters to isPublished:true only, so a drafted /
+  // unpublished article would otherwise be invisible to the admin dashboard.
+  async getAllArticlesAdmin(): Promise<{
+    message: string;
+    success: boolean;
+    articles: NewsroomDocument[];
+    total: number;
+  }> {
+    const articles = await this.newsroomModel
+      .find()
+      .sort({ createdAt: -1 })
+      .lean()
+      .exec();
+
+    return {
+      message: 'Articles fetched',
+      success: true,
+      articles: articles as unknown as NewsroomDocument[],
+      total: articles.length,
+    };
+  }
+
   // ─── PUBLIC: Fetch single article by slug ───────────────────────────────────
   // Used by the frontend dynamic route /newsroom/:slug
   async getArticleBySlug(slug: string): Promise<{

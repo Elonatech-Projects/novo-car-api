@@ -8,6 +8,7 @@
 // ADMIN ONLY — protected by JwtAdminGuard
 //   POST   /newsroom/upload-image → upload cover to Cloudinary, returns URL
 //   POST   /newsroom/create       → save article (uses URL from step above)
+//   GET    /newsroom/admin/all    → all articles, including drafts
 //   PATCH  /newsroom/:id/update   → edit article fields
 //   PATCH  /newsroom/:id/toggle   → publish ↔ draft toggle
 //   DELETE /newsroom/:id          → hard delete
@@ -61,6 +62,15 @@ export class NewsroomController {
   @Get('fetch')
   async getAllArticles() {
     return this.newsroomService.getAllArticles();
+  }
+
+  // ── ADMIN: All articles, including drafts ─────────────────────────────────
+  // Declared before the :slug catch-all is irrelevant here (different segment
+  // count), but kept alongside 'fetch' for readability.
+  @UseGuards(JwtAdminGuard)
+  @Get('admin/all')
+  async getAllArticlesAdmin() {
+    return this.newsroomService.getAllArticlesAdmin();
   }
 
   // ── PUBLIC: Single article by slug ────────────────────────────────────────
