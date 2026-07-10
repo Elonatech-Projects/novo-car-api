@@ -33,6 +33,11 @@ export class Auth {
 
   @Prop({ type: Date, default: null })
   lastLogin?: Date;
+
+  // Not @Prop-decorated — { timestamps: true } above makes Mongoose manage
+  // these automatically. Declared here only so TypeScript knows they exist.
+  createdAt?: Date;
+  updatedAt?: Date;
 }
 
 export const AuthSchema = SchemaFactory.createForClass(Auth);

@@ -1,6 +1,8 @@
 import {
   Controller,
   Post,
+  Get,
+  Patch,
   Body,
   HttpCode,
   HttpStatus,
@@ -10,9 +12,10 @@ import {
 } from '@nestjs/common';
 import { AuthService } from './auth.service';
 import { CreateAuthDto } from './dto/create-auth-dto';
-import { AuthResponse, Response } from './auth.service';
+import { AuthResponse, ProfileResponse, Response } from './auth.service';
 import { ResetPasswordDto } from './dto/resetpassword.dto';
 import { ChangePasswordDto } from './dto/change-password.dto';
+import { UpdateProfileDto } from './dto/update-profile.dto';
 import { JwtAuthGuard } from './guards/jwt-auth.guard';
 import { Throttle } from '@nestjs/throttler';
 import { LoginDto } from './dto/login.dto';
@@ -59,5 +62,28 @@ export class AuthController {
       throw new BadRequestException('Unauthorized');
     }
     return this.authService.changePassword(dto);
+  }
+
+  @Get('me')
+  @UseGuards(JwtAuthGuard)
+  async getProfile(
+    @Request() req: { user?: { _id: string } },
+  ): Promise<ProfileResponse> {
+    if (!req.user?._id) {
+      throw new BadRequestException('Unauthorized');
+    }
+    return this.authService.getProfile(req.user._id);
+  }
+
+  @Patch('me')
+  @UseGuards(JwtAuthGuard)
+  async updateProfile(
+    @Body() dto: UpdateProfileDto,
+    @Request() req: { user?: { _id: string } },
+  ): Promise<ProfileResponse> {
+    if (!req.user?._id) {
+      throw new BadRequestException('Unauthorized');
+    }
+    return this.authService.updateProfile(req.user._id, dto);
   }
 }

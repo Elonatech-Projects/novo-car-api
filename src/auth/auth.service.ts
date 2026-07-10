@@ -20,17 +20,27 @@ import { LoginDto } from './dto/login.dto';
 import { ForgotPasswordDto } from './dto/forgotpassword.dto';
 import { ResetPasswordDto } from './dto/resetpassword.dto';
 import { ChangePasswordDto } from './dto/change-password.dto';
+import { UpdateProfileDto } from './dto/update-profile.dto';
+
+interface AuthUserShape {
+  _id: string;
+  name: string;
+  email: string;
+  phoneNumber: string;
+  createdAt?: Date;
+}
+
+export interface ProfileResponse {
+  message: string;
+  success: boolean;
+  user: AuthUserShape;
+}
 
 export interface AuthResponse {
   message: string;
   success: boolean;
   token: string;
-  user: {
-    _id: string;
-    name: string;
-    email: string;
-    phoneNumber: string;
-  };
+  user: AuthUserShape;
 }
 
 export interface Response {
@@ -155,6 +165,7 @@ export class AuthService {
         name: user.name,
         email: user.email,
         phoneNumber: user.phoneNumber,
+        createdAt: user.createdAt,
       },
     };
   }
@@ -220,6 +231,72 @@ export class AuthService {
         name: registeredUser.name,
         email: registeredUser.email,
         phoneNumber: registeredUser.phoneNumber,
+        createdAt: registeredUser.createdAt,
+      },
+    };
+  }
+
+  async getProfile(userId: string): Promise<ProfileResponse> {
+    const user = await this.authModel.findById(userId);
+    if (!user) {
+      throw new BadRequestException('User not found');
+    }
+
+    return {
+      success: true,
+      message: 'Profile fetched successfully',
+      user: {
+        _id: String(user._id),
+        name: user.name,
+        email: user.email,
+        phoneNumber: user.phoneNumber,
+        createdAt: user.createdAt,
+      },
+    };
+  }
+
+  async updateProfile(
+    userId: string,
+    dto: UpdateProfileDto,
+  ): Promise<ProfileResponse> {
+    const user = await this.authModel.findById(userId);
+    if (!user) {
+      throw new BadRequestException('User not found');
+    }
+
+    if (dto.email) {
+      const normalizedEmail = dto.email.toLowerCase().trim();
+      if (normalizedEmail !== user.email) {
+        const existing = await this.authModel.findOne({
+          email: normalizedEmail,
+          _id: { $ne: user._id },
+        });
+        if (existing) {
+          throw new BadRequestException('Email already registered');
+        }
+        user.email = normalizedEmail;
+      }
+    }
+
+    if (dto.name) {
+      user.name = dto.name;
+    }
+
+    if (dto.phoneNumber) {
+      user.phoneNumber = dto.phoneNumber;
+    }
+
+    await user.save();
+
+    return {
+      success: true,
+      message: 'Profile updated successfully',
+      user: {
+        _id: String(user._id),
+        name: user.name,
+        email: user.email,
+        phoneNumber: user.phoneNumber,
+        createdAt: user.createdAt,
       },
     };
   }

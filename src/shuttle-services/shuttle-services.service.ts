@@ -426,6 +426,34 @@ export class ShuttleServicesService {
   async getAllBookings(): Promise<Shuttle[]> {
     return this.shuttleModel.find().sort({ createdAt: -1 }).lean().exec();
   }
+
+  // ── USER: fetch the signed-in rider's own bookings ──────────────────────────
+  //
+  // Schedule details are populated (not just ObjectIds) so the frontend can
+  // render route names/times/vehicle without a second round-trip per booking.
+
+  async findMine(
+    userId: string,
+    status?: ShuttleBookingStatus,
+  ): Promise<{ success: boolean; data: ShuttleDocument[] }> {
+    const query: Record<string, unknown> = {
+      userId: new Types.ObjectId(userId),
+    };
+    if (status) query.status = status;
+
+    const data = await this.shuttleModel
+      .find(query)
+      .sort({ createdAt: -1 })
+      .populate('schedule.outbound')
+      .populate('schedule.return')
+      .lean();
+
+    return {
+      success: true,
+      data: data as unknown as ShuttleDocument[],
+    };
+  }
+
   // ── ADMIN: fetch all bookings with filters ──────────────────────────────────
 
   async findAll(filters: FindAllShuttleServicesDto): Promise<{

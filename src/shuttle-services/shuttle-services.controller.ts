@@ -16,6 +16,7 @@ import { Request } from 'express';
 import { ShuttleServicesService } from './shuttle-services.service';
 import { CreateShuttleServicesDto } from './dto/create-shuttle-services.dto';
 import { FindAllShuttleServicesDto } from './dto/find-all-shuttle-services.dto';
+import { FindMyShuttleServicesDto } from './dto/find-my-shuttle-services.dto';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { JwtAdminGuard } from '../admin/guards/jwt-auth.guard';
 import { JwtUser } from '../auth/jwt.types';
@@ -49,6 +50,17 @@ export class ShuttleServicesController {
         expiresAt: booking.expiresAt.toISOString(),
       },
     };
+  }
+
+  // ── USER: fetch the signed-in rider's own bookings ───────────────────────────
+  // Query: ?status=paid (optional) — omit to get every status.
+  @Get('mine')
+  @UseGuards(JwtAuthGuard)
+  async findMine(
+    @Req() req: Request & { user: JwtUser },
+    @Query() filters: FindMyShuttleServicesDto,
+  ) {
+    return this.shuttleServicesService.findMine(req.user._id, filters.status);
   }
 
   // ── ADMIN: fetch all bookings with optional filters ─────────────────────────

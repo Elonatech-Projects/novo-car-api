@@ -49,6 +49,7 @@ import { LeaseOptionsModule } from './lease-options/lease-options.module';
 import { CustomQuoteModule } from './custom-quote/custom-quote.module';
 import { NewsroomModule } from './newsroom/newsroom.module';
 import { InterstateBookingModule } from './interstate-booking/interstate-booking.module';
+import { ScheduleConsultationModule } from './schedule-consultation/schedule-consultation.module';
 
 @Module({
   imports: [
@@ -125,7 +126,7 @@ import { InterstateBookingModule } from './interstate-booking/interstate-booking
     LeaseOptionsModule,
     CustomQuoteModule,
     NewsroomModule, // Newsroom articles — public fetch, admin create/edit/delete
-    InterstateBookingModule, // Interstate car-rental quote requests
+    InterstateBookingModule, ScheduleConsultationModule, // Interstate car-rental quote requests
   ],
   controllers: [],
   providers: [],
