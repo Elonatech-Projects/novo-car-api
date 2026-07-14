@@ -71,6 +71,9 @@ export class BookingRequest {
   numberOfCars?: number;
 
   @Prop({ required: false, trim: true })
+  weddingPackage?: string;
+
+  @Prop({ required: false, trim: true })
   tourPackage?: string;
 
   @Prop({ required: false, trim: true })

@@ -93,6 +93,10 @@ export class CreateBookingRequestDto {
   @IsNumber()
   numberOfCars?: number;
 
+  @IsOptional()
+  @IsString()
+  weddingPackage?: string;
+
   // Tour
   @IsOptional()
   @IsString()
