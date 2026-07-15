@@ -39,6 +39,7 @@ async function bootstrap() {
     'https://www.novo.ng',
     'https://nshuttle.vercel.app',
     'https://nshuttle.novo.ng',
+    'https://control.novo.ng',
   ];
 
   app.enableCors({
