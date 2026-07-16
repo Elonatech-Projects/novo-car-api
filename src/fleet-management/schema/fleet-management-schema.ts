@@ -59,6 +59,7 @@ export class FleetManagement {
   time!: string;
 
   @Prop({
+    trim: true,
     required: [true, 'Passenger count is required'],
   })
   passengerCount!: string;

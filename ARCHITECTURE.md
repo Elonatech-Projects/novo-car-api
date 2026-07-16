@@ -301,3 +301,22 @@ this list's "dead" label without checking**, same as we had to for `city`.
   `info` vs `debug`, and whether local `logs/*.log` files get written).
   No auth/security/business logic depends on it. User confirmed: leave it
   as-is.
+
+**2026-07-16** — Round-6 client-feedback session (main-website repo drove most
+of the work; backend changes below).
+- Fixed the "no email after Verification Service form" bug:
+  `verification-services.service.ts` referenced mail template
+  `verification-service-admin`, but no such `.hbs` existed in
+  `src/mail/templates/` — `compileTemplate` threw, the catch swallowed it,
+  request still saved. Created `verification-service-admin.hbs` (matches the
+  `contact-us-admin.hbs` style, fields: name/email/company/serviceType/message).
+- Also added a requester acknowledgment email: new
+  `verification-service-user.hbs` + second `sendTemplateEmail` call in
+  `createVerificationRequest` (same swallow-and-log error handling as the
+  admin email, so email failure never fails the request).
+- Verified live against the locally running backend: POST
+  `/verification-services/create` → 201, record persisted.
+- Note: Paystack config across backend `.env` (`sk_test_…`) and the NShuttle
+  app (`pk_test_…`) is the developer's TEST account — the client flagged that
+  the Paystack account shown at checkout "is not ours"; swapping in the
+  client's own live keys is pending them providing keys.

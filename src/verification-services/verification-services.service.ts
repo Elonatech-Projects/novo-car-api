@@ -44,6 +44,19 @@ export class VerificationServicesService {
         this.logger.error('Failed to send notification email:', error);
       }
 
+      //   Acknowledgment email to the requester
+      try {
+        await this.mailService.sendTemplateEmail(
+          dto.email,
+          'Your Verification Request Has Been Received - Novo Cars',
+          'verification-service-user',
+          { ...dto },
+        );
+        this.logger.log(`Confirmation email sent to requester: ${dto.email}`);
+      } catch (error) {
+        this.logger.error('Failed to send confirmation email:', error);
+      }
+
       return savedRequest;
     } catch (error) {
       if (error instanceof MongoServerError && error.code === 11000) {
