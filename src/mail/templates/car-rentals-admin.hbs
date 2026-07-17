@@ -14,13 +14,20 @@
 <p><strong>Variant:</strong> {{subModel}}</p>
 {{/if}}
 
+<hr/>
+
+<p><strong>Pickup Location:</strong> {{default pickupLocation "Not provided"}}</p>
+<p><strong>Dropoff Location:</strong> {{default dropoffLocation "Not provided"}}</p>
 <p><strong>Pickup Date:</strong> {{pickupDate}}</p>
+<p><strong>Pickup Time:</strong> {{default pickupTime "Not provided"}}</p>
 <p><strong>Dropoff Date:</strong> {{dropoffDate}}</p>
+<p><strong>Rental Duration:</strong> {{default rentalDuration "Not provided"}}</p>
+<p><strong>Quoted Price:</strong> {{default price "Not provided"}}</p>
 
 <hr/>
 
-<p><strong>Notes:</strong></p>
-<p>{{notes}}</p>
+<p><strong>Notes / Special Requests:</strong></p>
+<p>{{default notes "None"}}</p>
 
 <br/>
 <p>Year: {{year}}</p>

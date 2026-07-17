@@ -12,6 +12,7 @@
   <tr><td><strong>Date:</strong></td><td>{{booking.bookingDate}}</td></tr>
   <tr><td><strong>Time:</strong></td><td>{{booking.pickupTime}}</td></tr>
   <tr><td><strong>Passengers:</strong></td><td>{{booking.numberOfPassengers}}</td></tr>
+  <tr><td><strong>Vehicle Type:</strong></td><td>{{default booking.vehicleType "Not specified"}}</td></tr>
 </table>
 
 <hr />
@@ -41,11 +42,12 @@
 
 {{#if booking.weddingVenue}}
 <hr />
-<h3>💍 Wedding Details</h3>
+<h3>💍 Wedding / Event Details</h3>
 <table>
+  <tr><td><strong>Package / Event Type:</strong></td><td>{{default booking.weddingPackage "Not specified"}}</td></tr>
   <tr><td><strong>Venue:</strong></td><td>{{booking.weddingVenue}}</td></tr>
   <tr><td><strong>Date:</strong></td><td>{{booking.weddingDate}}</td></tr>
-  <tr><td><strong>Cars:</strong></td><td>{{booking.numberOfCars}}</td></tr>
+  <tr><td><strong>Cars:</strong></td><td>{{default booking.numberOfCars "Not specified"}}</td></tr>
 </table>
 {{/if}}
 
