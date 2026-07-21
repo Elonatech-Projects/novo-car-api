@@ -45,7 +45,10 @@ export class AdminController {
   @Throttle({ default: { ttl: 60_000, limit: 10 } })
   @UseGuards(JwtAdminGuard, SuperAdminGuard)
   @Post('create')
-  async createAdmin(@Body() dto: CreateAdminDto, @Req() req: { user: JwtUser }) {
+  async createAdmin(
+    @Body() dto: CreateAdminDto,
+    @Req() req: { user: JwtUser },
+  ) {
     return this.adminService.createAdmin(dto, {
       id: req.user._id,
       email: req.user.email,
@@ -85,5 +88,11 @@ export class AdminController {
   @Post('sign-in')
   async signAdminIn(@Body() dto: LoginAdminDto) {
     return this.adminService.loginAdmin(dto.email, dto.password);
+  }
+
+  @UseGuards(JwtAdminGuard)
+  @Get('verify')
+  async verifyToken(@Req() req: { user: JwtUser }) {
+    return this.adminService.verifyAdmin(req.user._id);
   }
 }

@@ -252,4 +252,36 @@ export class AdminService {
       },
     };
   }
+
+  async verifyAdmin(adminId: string) {
+    const admin = await this.adminModel
+      .findById(adminId)
+      .select('-password')
+      .lean()
+      .exec();
+
+    if (!admin) {
+      throw new NotFoundException('Admin not found');
+    }
+
+    // Guard: disabled admins cannot use their token
+    if (admin.isActive === false) {
+      throw new UnauthorizedException(
+        'Account is disabled. Contact a super admin.',
+      );
+    }
+
+    this.logger.debug(`Token verified for admin: ${admin.email}`);
+
+    return {
+      success: true,
+      message: 'Token is valid',
+      admin: {
+        id: admin._id,
+        name: admin.name,
+        email: admin.email,
+        role: admin.role,
+      },
+    };
+  }
 }

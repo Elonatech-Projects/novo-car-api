@@ -4,10 +4,14 @@ export interface JwtPayload {
   sub: string; // admin ID
   email: string;
   role?: AdminRole;
+  iat?: number;
+  exp?: number;
 }
 
 export interface JwtUser {
   _id: string;
   email: string;
   role?: AdminRole;
+  iat?: number;
+  exp?: number;
 }

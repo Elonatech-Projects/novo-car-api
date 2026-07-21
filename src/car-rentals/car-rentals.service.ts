@@ -78,9 +78,9 @@ export class CarRentalsService {
       throw new BadRequestException('Pickup date cannot be in the past.');
     }
 
-    if (dropoff <= pickup) {
-      throw new BadRequestException('Dropoff must be after pickup date.');
-    }
+    // if (dropoff <= pickup) {
+    //   throw new BadRequestException('Dropoff must be after pickup date.');
+    // }
 
     // Build rental object
     const carRentalData = {
