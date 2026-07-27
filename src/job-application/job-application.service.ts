@@ -35,37 +35,56 @@ export class JobApplicationsService {
    */
   async create(
     dto: CreateJobApplicationDto,
-    cv: Express.Multer.File,
+    cv?: Express.Multer.File,
   ): Promise<JobApplication> {
-    if (!cv) {
-      throw new BadRequestException('CV file is required');
-    }
-
-    const uploadResult = await this.cloudinaryService.uploadFile(cv);
-    // console.log('Uploading CV...', uploadResult);
-
     const adminEmail = process.env.ADMIN_EMAIL;
 
     if (!adminEmail) {
       throw new InternalServerErrorException('ADMIN_EMAIL is not configured');
     }
 
+    let cvUrl: string | undefined = dto.cvUrl;
+    let cvFileName: string | undefined;
+
+    if (cv) {
+      const uploadResult = await this.cloudinaryService.uploadFile(cv, {
+        folder: 'job-applications/cvs',
+        resourceType: 'raw',
+      });
+      cvUrl = uploadResult.secure_url;
+      cvFileName = cv.originalname;
+    } else if (!dto.cvUrl) {
+      throw new BadRequestException('CV file or CV URL is required');
+    }
+
+    const resolvedCvFileName =
+      cvFileName || (dto.cvUrl ? this.getCvFileName(dto.cvUrl) : undefined);
+
     const application = new this.applicationModel({
       ...dto,
-      cvFileName: cv.originalname,
-      cvUrl: uploadResult.secure_url,
+      cvFileName: resolvedCvFileName,
+      cvUrl,
     });
 
     const savedApplication = await application.save();
+    const applicationId = String(savedApplication.id ?? '');
 
     /**
      * Run notifications outside request lifecycle
      */
     setImmediate(() => {
-      void this.processEmailNotifications(dto, cv, savedApplication.id);
+      void this.processEmailNotifications(dto, cv, applicationId);
     });
 
     return savedApplication;
+  }
+
+  private getCvFileName(cvUrl: string): string {
+    try {
+      return cvUrl.split('/').pop()?.split('?')[0] || 'cv';
+    } catch {
+      return 'cv';
+    }
   }
 
   /**
@@ -74,7 +93,7 @@ export class JobApplicationsService {
    */
   private async processEmailNotifications(
     dto: CreateJobApplicationDto,
-    cv: Express.Multer.File,
+    cv: Express.Multer.File | undefined,
     applicationId: string,
   ): Promise<void> {
     const adminEmail = process.env.ADMIN_EMAIL;
@@ -98,14 +117,16 @@ export class JobApplicationsService {
           address: dto.address,
           jobTitle: dto.jobTitle,
           coverLetter: dto.coverLetter || 'N/A',
-          cvFileName: cv.originalname,
+          cvFileName: cv?.originalname || dto.cvUrl || 'N/A',
         },
-        attachments: [
-          {
-            filename: cv.originalname,
-            content: cv.buffer,
-          },
-        ],
+        attachments: cv
+          ? [
+              {
+                filename: cv.originalname,
+                content: cv.buffer,
+              },
+            ]
+          : undefined,
       });
 
       this.logger.log(`Admin email sent | applicationId=${applicationId}`);
@@ -156,6 +177,25 @@ export class JobApplicationsService {
    */
   async findOne(id: string): Promise<JobApplication | null> {
     return this.applicationModel.findById(id).lean().exec();
+  }
+
+  /**
+   * Admin: Get the downloadable CV link for a job application
+   */
+  async getCvDownloadLink(
+    id: string,
+  ): Promise<{ cvUrl?: string; cvFileName?: string }> {
+    const application = await this.applicationModel.findById(id).lean().exec();
+
+    if (!application) {
+      throw new BadRequestException('Application not found');
+    }
+
+    return {
+      cvUrl: application.cvUrl,
+      cvFileName:
+        application.cvFileName || this.getCvFileName(application.cvUrl || ''),
+    };
   }
 
   // Admin: Update application status (e.g. pending, reviewed, rejected, accepted)

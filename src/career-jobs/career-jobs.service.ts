@@ -63,7 +63,11 @@ export class CareerJobsService {
 
   // Fetch all career jobs (admin only)
   async getCareerJob() {
-    const job = await this.careerJobsModel.find();
+    const job = await this.careerJobsModel
+      .find()
+      .sort({ createdAt: -1 })
+      .lean()
+      .exec();
 
     if (!job) {
       throw new BadRequestException('No document found in database');
@@ -75,6 +79,8 @@ export class CareerJobsService {
       job,
     };
   }
+
+  // Get jobs
   async getCareerJobById(id: string) {
     const job = await this.careerJobsModel.findById(id);
 

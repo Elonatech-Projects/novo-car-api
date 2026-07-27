@@ -1,6 +1,12 @@
 // src/job-application/dto/create-job-application.dto.ts
 
-import { IsString, IsNotEmpty, IsOptional, IsEmail } from 'class-validator';
+import {
+  IsEmail,
+  IsNotEmpty,
+  IsOptional,
+  IsString,
+  IsUrl,
+} from 'class-validator';
 
 export class CreateJobApplicationDto {
   @IsString()
@@ -47,7 +53,13 @@ export class CreateJobApplicationDto {
   @IsOptional()
   coverLetter?: string;
 
-  @IsString()
   @IsOptional()
+  @IsUrl({ require_protocol: true })
   cvUrl?: string;
+
+  // Uploaded CV file (multipart form-data field 'cv').
+  // This is populated by the controller via @UploadedFile and is
+  // intentionally left unvalidated by class-validator.
+  @IsOptional()
+  cv?: any;
 }
