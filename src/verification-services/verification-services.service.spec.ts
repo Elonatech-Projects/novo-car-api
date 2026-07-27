@@ -4,7 +4,6 @@ import { getModelToken } from '@nestjs/mongoose';
 import { VerificationService } from './schema/verification-services.schema';
 import { ConfigService } from '@nestjs/config';
 import { MailService } from '../mail/mail.service';
-import { ConflictException } from '@nestjs/common';
 import { MongoServerError } from 'mongodb';
 
 describe('VerificationServicesService', () => {
@@ -70,7 +69,7 @@ describe('VerificationServicesService', () => {
     );
   });
 
-  it('should throw conflict exception for duplicate key errors', async () => {
+  it('should rethrow database errors without wrapping them', async () => {
     const dto = {
       name: 'Test User',
       email: 'test@example.com',
@@ -84,8 +83,8 @@ describe('VerificationServicesService', () => {
     } as any);
     saveMock.mockRejectedValue(duplicateError);
 
-    await expect(service.createVerificationRequest(dto)).rejects.toBeInstanceOf(
-      ConflictException,
+    await expect(service.createVerificationRequest(dto)).rejects.toBe(
+      duplicateError,
     );
   });
 });

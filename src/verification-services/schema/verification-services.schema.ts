@@ -62,5 +62,5 @@ export const VerificationServiceSchema =
 
 VerificationServiceSchema.index(
   { email: 1, company: 1 },
-  { unique: true, name: 'unique_email_company' },
+  { name: 'verification_service_email_company_idx' },
 );

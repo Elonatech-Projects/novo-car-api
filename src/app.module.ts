@@ -126,7 +126,8 @@ import { ScheduleConsultationModule } from './schedule-consultation/schedule-con
     LeaseOptionsModule,
     CustomQuoteModule,
     NewsroomModule, // Newsroom articles — public fetch, admin create/edit/delete
-    InterstateBookingModule, ScheduleConsultationModule, // Interstate car-rental quote requests
+    InterstateBookingModule,
+    ScheduleConsultationModule, // Interstate car-rental quote requests
   ],
   controllers: [],
   providers: [],
