@@ -191,11 +191,38 @@ export class JobApplicationsService {
       throw new BadRequestException('Application not found');
     }
 
+    const cvFileName =
+      application.cvFileName || this.getCvFileName(application.cvUrl || '');
+
     return {
-      cvUrl: application.cvUrl,
-      cvFileName:
-        application.cvFileName || this.getCvFileName(application.cvUrl || ''),
+      cvUrl: this.withAttachmentFlag(application.cvUrl, cvFileName),
+      cvFileName,
     };
+  }
+
+  /**
+   * A plain Cloudinary "raw" URL loads in the browser rather than downloading
+   * — the admin table's `<a download>` attribute is silently ignored because
+   * Cloudinary is a different origin, so clicking "Download CV" just opened
+   * (or failed to open) a new tab instead of saving the file. Inserting
+   * Cloudinary's `fl_attachment` delivery flag makes Cloudinary itself send
+   * `Content-Disposition: attachment`, which forces a real download
+   * regardless of the browser's cross-origin `download`-attribute rules.
+   */
+  private withAttachmentFlag(
+    cvUrl: string | undefined,
+    fileName: string,
+  ): string | undefined {
+    if (!cvUrl) return cvUrl;
+
+    const uploadMarker = '/upload/';
+    const markerIndex = cvUrl.indexOf(uploadMarker);
+    if (markerIndex === -1) return cvUrl;
+
+    const insertAt = markerIndex + uploadMarker.length;
+    const flag = `fl_attachment:${encodeURIComponent(fileName)}/`;
+
+    return `${cvUrl.slice(0, insertAt)}${flag}${cvUrl.slice(insertAt)}`;
   }
 
   // Admin: Update application status (e.g. pending, reviewed, rejected, accepted)

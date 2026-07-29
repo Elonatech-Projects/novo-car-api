@@ -3,6 +3,7 @@ import { MongooseModule } from '@nestjs/mongoose';
 import { PaymentsService } from './payments.service';
 import { PaymentsController } from './payments.controller';
 import { PaystackService } from './paystack.service';
+import { PaymentReconciliationService } from './payment-reconciliation.service';
 import {
   UserBooking,
   UserBookingSchema,
@@ -36,6 +37,6 @@ import { Auth } from '../auth/schema/auth-schema';
     ]),
   ],
   controllers: [PaymentsController],
-  providers: [PaymentsService, PaystackService],
+  providers: [PaymentsService, PaystackService, PaymentReconciliationService],
 })
 export class PaymentsModule {}

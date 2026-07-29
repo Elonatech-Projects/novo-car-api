@@ -8,6 +8,8 @@ import { MailService } from '../mail/mail.service';
 import { ConfigService } from '@nestjs/config';
 import { InjectModel } from '@nestjs/mongoose';
 import { CreateVerificationServicesDto } from './dto/verification-services.dto';
+import { AuditService } from '../audit/audit.service';
+import { logAdminNotificationFailure } from '../common/utils/admin-notification-failure';
 
 @Injectable()
 export class VerificationServicesService {
@@ -19,6 +21,7 @@ export class VerificationServicesService {
     private readonly verificationServiceModel: Model<VerificationServiceDocument>,
     private readonly configService: ConfigService,
     private readonly mailService: MailService,
+    private readonly auditService: AuditService,
   ) {}
 
   async createVerificationRequest(
@@ -26,19 +29,29 @@ export class VerificationServicesService {
   ): Promise<VerificationServiceDocument> {
     const newRequest = new this.verificationServiceModel(dto);
     const savedRequest = await newRequest.save();
-    const adminEmail = this.configService.get<string>('ADMIN_EMAIL') || '';
+    const adminEmail = this.configService.get<string>('ADMIN_EMAIL');
 
     //   Email notification to admin about new verification request
-    try {
-      await this.mailService.sendTemplateEmail(
-        adminEmail,
-        'New Verification Service Request',
-        'verification-service-admin',
-        { ...dto },
-      );
-      this.logger.log(`Notification email sent to admin: ${adminEmail}`);
-    } catch (error) {
-      this.logger.error('Failed to send notification email:', error);
+    if (!adminEmail) {
+      this.logger.warn('ADMIN_EMAIL not configured — skipping admin email.');
+    } else {
+      try {
+        await this.mailService.sendTemplateEmail(
+          adminEmail,
+          'New Verification Service Request',
+          'verification-service-admin',
+          { ...dto },
+        );
+        this.logger.log(`Notification email sent to admin: ${adminEmail}`);
+      } catch (error) {
+        await logAdminNotificationFailure(this.auditService, this.logger, {
+          context: 'verification-services',
+          channel: 'email',
+          recipient: adminEmail,
+          subject: 'New Verification Service Request',
+          error,
+        });
+      }
     }
 
     //   Acknowledgment email to the requester

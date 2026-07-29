@@ -6,6 +6,7 @@ import {
   IsOptional,
   IsString,
   IsUrl,
+  MinLength,
 } from 'class-validator';
 
 export class CreateJobApplicationDto {
@@ -19,10 +20,12 @@ export class CreateJobApplicationDto {
 
   @IsString()
   @IsNotEmpty()
+  @MinLength(2)
   firstName!: string;
 
   @IsString()
   @IsNotEmpty()
+  @MinLength(2)
   lastName!: string;
 
   @IsEmail()
@@ -31,6 +34,7 @@ export class CreateJobApplicationDto {
 
   @IsString()
   @IsNotEmpty()
+  @MinLength(7)
   phoneNumber!: string;
 
   @IsString()
@@ -39,6 +43,7 @@ export class CreateJobApplicationDto {
 
   @IsString()
   @IsNotEmpty()
+  @MinLength(3)
   address!: string;
 
   @IsString()

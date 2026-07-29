@@ -10,6 +10,8 @@ import {
   ScheduleConsultationDocument,
 } from './schema/schedule-consultation.schema';
 import { MailService } from '../mail/mail.service';
+import { AuditService } from '../audit/audit.service';
+import { logAdminNotificationFailure } from '../common/utils/admin-notification-failure';
 
 @Injectable()
 export class ScheduleConsultationService {
@@ -20,6 +22,7 @@ export class ScheduleConsultationService {
     private readonly consultationModel: Model<ScheduleConsultationDocument>,
     private readonly mailService: MailService,
     private readonly configService: ConfigService,
+    private readonly auditService: AuditService,
   ) {}
 
   async create(dto: CreateScheduleConsultationDto) {
@@ -53,7 +56,13 @@ export class ScheduleConsultationService {
         );
         this.logger.log('Consultation admin email sent');
       } catch (error) {
-        this.logger.error('Failed to send consultation admin email', error);
+        await logAdminNotificationFailure(this.auditService, this.logger, {
+          context: 'schedule-consultation',
+          channel: 'email',
+          recipient: adminEmail,
+          subject: 'New Consultation Request - Novo Cars',
+          error,
+        });
       }
     }
 

@@ -7,9 +7,11 @@ import {
   ScheduleConsultation,
   ScheduleConsultationSchema,
 } from './schema/schedule-consultation.schema';
+import { AuditModule } from '../audit/audit.module';
 
 @Module({
   imports: [
+    AuditModule,
     MongooseModule.forFeature([
       { name: ScheduleConsultation.name, schema: ScheduleConsultationSchema },
     ]),

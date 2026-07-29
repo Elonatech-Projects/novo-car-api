@@ -7,11 +7,16 @@ import {
   Param,
   Body,
   Query,
+  UseGuards,
 } from '@nestjs/common';
 import { PricingAdminService } from './pricing.admin.service';
 import { CreatePricingDto } from './dto/create-pricing.dto';
 import { UpdatePricingDto } from './dto/update-pricing.dto';
+import { JwtAdminGuard } from '../../admin/guards/jwt-auth.guard';
 
+// Previously had NO guard at all — anyone who found this URL could
+// create/list/edit/toggle shuttle pricing with no token whatsoever.
+@UseGuards(JwtAdminGuard)
 @Controller('admin/shuttle-bookings/pricing')
 export class PricingAdminController {
   constructor(private readonly service: PricingAdminService) {}

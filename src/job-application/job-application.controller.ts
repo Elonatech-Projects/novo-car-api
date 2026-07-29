@@ -92,7 +92,12 @@ export class JobApplicationsController {
     return this.service.findAll();
   }
 
-  @Get(':id') async findOne(@Param('id') id: string) {
+  // Was missing @UseGuards(JwtAdminGuard) while every sibling route on this
+  // controller has it — anyone who guessed/enumerated an application ID
+  // could read an applicant's name, contact info, and CV link.
+  @Get(':id')
+  @UseGuards(JwtAdminGuard)
+  async findOne(@Param('id') id: string) {
     return this.service.findOne(id);
   }
 

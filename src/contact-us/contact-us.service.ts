@@ -6,6 +6,8 @@ import { Model } from 'mongoose';
 import { InjectModel } from '@nestjs/mongoose';
 import { ContactUsDto } from './dto/contact-us.dto';
 import { SmsService } from '../notifications/sms/sms.service';
+import { AuditService } from '../audit/audit.service';
+import { logAdminNotificationFailure } from '../common/utils/admin-notification-failure';
 
 @Injectable()
 export class ContactUsService {
@@ -18,6 +20,7 @@ export class ContactUsService {
     private readonly mailService: MailService,
     private readonly configService: ConfigService,
     private readonly smsService: SmsService,
+    private readonly auditService: AuditService,
   ) {
     this.companySender =
       this.configService.get<string>('TERMII_SENDER_ID_COMPANY') ?? 'Novo';
@@ -49,12 +52,24 @@ export class ContactUsService {
     if (!adminEmail) {
       this.logger.warn('ADMIN_EMAIL not configured — skipping admin email.');
     } else {
-      await this.mailService.sendTemplateEmail(
-        adminEmail,
-        'New Contact Us Received - Novo Cars',
-        'contact-us-admin',
-        { ...dto },
-      );
+      // Previously unguarded — a failure here would have 500'd the whole
+      // request even though the contact message was already saved.
+      try {
+        await this.mailService.sendTemplateEmail(
+          adminEmail,
+          'New Contact Us Received - Novo Cars',
+          'contact-us-admin',
+          { ...dto },
+        );
+      } catch (error) {
+        await logAdminNotificationFailure(this.auditService, this.logger, {
+          context: 'contact-us',
+          channel: 'email',
+          recipient: adminEmail,
+          subject: 'New Contact Us Received - Novo Cars',
+          error,
+        });
+      }
     }
 
     try {
@@ -74,10 +89,13 @@ export class ContactUsService {
         `Contact us SMS notification sent to company (${this.companyPhone})`,
       );
     } catch (error) {
-      this.logger.error(
-        'Contact Us SMS failed:',
-        error instanceof Error ? error.stack : String(error),
-      );
+      await logAdminNotificationFailure(this.auditService, this.logger, {
+        context: 'contact-us',
+        channel: 'sms',
+        recipient: this.companyPhone,
+        subject: 'New contact us message alert',
+        error,
+      });
     }
 
     return {

@@ -8,9 +8,11 @@ import {
 } from './schema/verification-services.schema';
 import { MailService } from '../mail/mail.service';
 import { ConfigService } from '@nestjs/config';
+import { AuditModule } from '../audit/audit.module';
 
 @Module({
   imports: [
+    AuditModule,
     MongooseModule.forFeature([
       {
         name: VerificationService.name,

@@ -15,9 +15,7 @@ import {
   AirportTransferStatus,
 } from './schema/airport-transfer.schema';
 
-// In-memory duplicate guard — resets on server restart (acceptable for now)
-const recentBookings = new Map<string, number>();
-const DUPLICATE_WINDOW = 15 * 60 * 1000; // 15 mins
+const DUPLICATE_WINDOW_MS = 15 * 60 * 1000; // 15 mins
 
 @Injectable()
 export class AirportTransferService {
@@ -32,23 +30,31 @@ export class AirportTransferService {
 
   async create(dto: CreateAirportTransferDto) {
     try {
-      const key = `${dto.email}-${dto.date}-${dto.airport}-${dto.vehicle}`;
-      const now = Date.now();
+      const email = dto.email.toLowerCase().trim();
 
-      // Duplicate check
-      const lastRequest = recentBookings.get(key);
-      if (lastRequest && now - lastRequest < DUPLICATE_WINDOW) {
+      // Duplicate check — DB-backed so it survives restarts (Render's free
+      // tier sleeps/restarts often, which reset a previous in-memory guard).
+      const existing = await this.airportTransferModel
+        .findOne({
+          email,
+          date: dto.date,
+          airport: dto.airport,
+          vehicle: dto.vehicle,
+          createdAt: { $gte: new Date(Date.now() - DUPLICATE_WINDOW_MS) },
+        })
+        .lean()
+        .exec();
+
+      if (existing) {
         return {
           message: 'Duplicate booking detected. Please wait before retrying.',
         };
       }
 
-      recentBookings.set(key, now);
-
       // Persist the booking so admins can review it later.
       const saved = await this.airportTransferModel.create({
         ...dto,
-        email: dto.email.toLowerCase().trim(),
+        email,
         status: 'pending_review',
       });
 
@@ -64,7 +70,10 @@ export class AirportTransferService {
         );
       });
 
-      return { message: 'Airport transfer booking received successfully' };
+      return {
+        success: true,
+        message: 'Airport transfer booking received successfully',
+      };
     } catch (error) {
       this.logger.error(
         'Airport booking error',

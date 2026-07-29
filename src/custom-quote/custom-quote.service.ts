@@ -7,6 +7,8 @@ import { NotificationService } from '../notifications/notifications.service';
 import { CreateCustomQuoteDto } from './dto/create-custom-quote.dto';
 import { SmsService } from '../notifications/sms/sms.service';
 import { ConfigService } from '@nestjs/config';
+import { AuditService } from '../audit/audit.service';
+import { logAdminNotificationFailure } from '../common/utils/admin-notification-failure';
 @Injectable()
 export class CustomQuoteService {
   private readonly logger = new Logger(CustomQuoteService.name);
@@ -20,6 +22,7 @@ export class CustomQuoteService {
     private readonly mailService: MailService,
     private readonly smsService: SmsService,
     private readonly configService: ConfigService,
+    private readonly auditService: AuditService,
   ) {
     this.companySender =
       this.configService.get<string>('TERMII_SENDER_ID_COMPANY') ?? 'Novo';
@@ -52,32 +55,34 @@ export class CustomQuoteService {
     // }
 
     /* ---------- ADMIN EMAIL ----------- */
-    const adminEmail = process.env.ADMIN_EMAIL || '';
+    // Previously sent twice: once here (guarded) and again immediately after
+    // with a second unguarded call (no try/catch — a failure there would
+    // have 500'd the whole request even though the quote was already saved,
+    // and every quote request emailed the admin inbox twice). Consolidated
+    // into a single guarded send.
+    const adminEmail = this.configService.get<string>('ADMIN_EMAIL');
 
-    try {
-      await this.mailService.sendTemplateEmail(
-        adminEmail,
-        'New Custom Quote Request - Novo Cars',
-        'custom-quote-admin',
-        { ...dto },
-      );
-    } catch (error) {
-      this.logger.error('Failed to send admin email', error);
-    }
-
-    const adminEmail2 = this.configService.get<string>('ADMIN_EMAIL');
-
-    if (!adminEmail2) {
+    if (!adminEmail) {
       this.logger.warn(
         'ADMIN_EMAIL not configured — skipping Custom Quote admin email.',
       );
     } else {
-      await this.mailService.sendTemplateEmail(
-        adminEmail2,
-        'New Custom Quote Request - Novo Cars',
-        'custom-quote-admin',
-        { ...dto },
-      );
+      try {
+        await this.mailService.sendTemplateEmail(
+          adminEmail,
+          'New Custom Quote Request - Novo Cars',
+          'custom-quote-admin',
+          { ...dto },
+        );
+      } catch (error) {
+        await logAdminNotificationFailure(this.auditService, this.logger, {
+          context: 'custom-quote',
+          channel: 'email',
+          recipient: adminEmail,
+          subject: 'New Custom Quote Request - Novo Cars',
+          error,
+        });
+      }
     }
 
     try {
@@ -92,7 +97,13 @@ export class CustomQuoteService {
 
       await this.smsService.sendSMS([this.companyPhone], smsMessage);
     } catch (error) {
-      this.logger.error('Failed to send SMS', error);
+      await logAdminNotificationFailure(this.auditService, this.logger, {
+        context: 'custom-quote',
+        channel: 'sms',
+        recipient: this.companyPhone,
+        subject: 'New custom quote request alert',
+        error,
+      });
     }
 
     return {

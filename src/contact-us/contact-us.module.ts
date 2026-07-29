@@ -5,9 +5,11 @@ import { ContactUsController } from './contact-us.controller';
 import { ContactUsService } from './contact-us.service';
 import { MailService } from '../mail/mail.service';
 import { NotificationsModule } from '../notifications/notifications.module';
+import { AuditModule } from '../audit/audit.module';
 @Module({
   imports: [
     NotificationsModule,
+    AuditModule,
     MongooseModule.forFeature([
       { name: ContactUs.name, schema: ContactUsSchema },
     ]),

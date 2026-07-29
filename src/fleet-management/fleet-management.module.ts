@@ -11,12 +11,14 @@ import { MailService } from '../mail/mail.service';
 import { MailModule } from '../mail/mail.module';
 import { NotificationsModule } from '../notifications/notifications.module';
 import { SmsModule } from '../notifications/sms/sms.module';
+import { AuditModule } from '../audit/audit.module';
 
 @Module({
   imports: [
     MailModule,
     NotificationsModule,
     SmsModule,
+    AuditModule,
     MongooseModule.forFeature([
       { name: FleetManagement.name, schema: FleetManagementSchema },
       { name: Auth.name, schema: AuthSchema },

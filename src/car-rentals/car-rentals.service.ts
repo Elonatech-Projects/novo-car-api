@@ -8,6 +8,8 @@ import { CarRentalsDto } from './dto/car-rentals.dto';
 import { MailService } from '../mail/mail.service';
 import { ConfigService } from '@nestjs/config';
 import { SmsService } from '../notifications/sms/sms.service';
+import { AuditService } from '../audit/audit.service';
+import { logAdminNotificationFailure } from '../common/utils/admin-notification-failure';
 
 @Injectable()
 export class CarRentalsService {
@@ -23,6 +25,7 @@ export class CarRentalsService {
     private readonly mailService: MailService,
     private readonly configService: ConfigService,
     private readonly smsService: SmsService,
+    private readonly auditService: AuditService,
   ) {
     this.companySender =
       this.configService.get<string>('TERMII_SENDER_ID_COMPANY') ?? 'Novo';
@@ -122,12 +125,24 @@ export class CarRentalsService {
     if (!adminEmail) {
       this.logger.warn('ADMIN_EMAIL not configured — skipping admin email.');
     } else {
-      await this.mailService.sendTemplateEmail(
-        adminEmail,
-        'New Car Rental Booking - Novo Cars',
-        'car-rentals-admin',
-        { ...dto },
-      );
+      // Previously unguarded — a failure here would have 500'd the whole
+      // request even though the rental was already saved to the DB.
+      try {
+        await this.mailService.sendTemplateEmail(
+          adminEmail,
+          'New Car Rental Booking - Novo Cars',
+          'car-rentals-admin',
+          { ...dto },
+        );
+      } catch (error) {
+        await logAdminNotificationFailure(this.auditService, this.logger, {
+          context: 'car-rentals',
+          channel: 'email',
+          recipient: adminEmail,
+          subject: 'New Car Rental Booking - Novo Cars',
+          error,
+        });
+      }
     }
 
     try {
@@ -148,10 +163,13 @@ export class CarRentalsService {
         `Car rental SMS notification sent to company (${this.companyPhone})`,
       );
     } catch (error) {
-      this.logger.error(
-        'Car Rentals SMS failed:',
-        error instanceof Error ? error.stack : String(error),
-      );
+      await logAdminNotificationFailure(this.auditService, this.logger, {
+        context: 'car-rentals',
+        channel: 'sms',
+        recipient: this.companyPhone,
+        subject: 'New car rental request alert',
+        error,
+      });
     }
 
     return {

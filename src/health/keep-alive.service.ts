@@ -23,6 +23,13 @@ export class KeepAliveService {
   private readonly selfUrl =
     process.env.SELF_PING_URL || process.env.RENDER_EXTERNAL_URL;
 
+  // A single ping failure is noise (a transient blip). Several IN A ROW means
+  // the instance itself is likely unreachable — that's worth surfacing at
+  // `error` level so log-based monitoring actually notices, instead of every
+  // failure quietly sitting at `warn` forever.
+  private consecutiveFailures = 0;
+  private static readonly ALERT_THRESHOLD = 3;
+
   @Cron(CronExpression.EVERY_10_MINUTES)
   async pingSelf(): Promise<void> {
     if (!this.selfUrl) {
@@ -35,10 +42,18 @@ export class KeepAliveService {
     try {
       const res = await fetch(url, { method: 'GET' });
       this.logger.debug(`Keep-alive ping → ${url} (${res.status})`);
+      this.consecutiveFailures = 0;
     } catch (err) {
-      this.logger.warn(
-        `Keep-alive ping failed: ${err instanceof Error ? err.message : String(err)}`,
-      );
+      this.consecutiveFailures += 1;
+      const message = err instanceof Error ? err.message : String(err);
+
+      if (this.consecutiveFailures >= KeepAliveService.ALERT_THRESHOLD) {
+        this.logger.error(
+          `Keep-alive ping failed ${this.consecutiveFailures} times in a row — instance may be unreachable: ${message}`,
+        );
+      } else {
+        this.logger.warn(`Keep-alive ping failed: ${message}`);
+      }
     }
   }
 }

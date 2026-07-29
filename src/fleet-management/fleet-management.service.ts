@@ -11,6 +11,8 @@ import { CreateFleetManagementDto } from './dto/create-fleet-management.dto';
 import { MailService } from '../mail/mail.service';
 import { NotificationService } from '../notifications/notifications.service';
 import { SmsService } from '../notifications/sms/sms.service';
+import { AuditService } from '../audit/audit.service';
+import { logAdminNotificationFailure } from '../common/utils/admin-notification-failure';
 
 @Injectable()
 export class FleetManagementService {
@@ -26,6 +28,7 @@ export class FleetManagementService {
     private readonly mailService: MailService,
     private readonly smsService: SmsService,
     private readonly configService: ConfigService,
+    private readonly auditService: AuditService,
   ) {
     this.companySender =
       this.configService.get<string>('TERMII_SENDER_ID_COMPANY') ?? 'Novo';
@@ -89,7 +92,13 @@ export class FleetManagementService {
         { ...dto },
       );
     } catch (error) {
-      this.logger.error('Failed to send fleet management admin email', error);
+      await logAdminNotificationFailure(this.auditService, this.logger, {
+        context: 'fleet-management',
+        channel: 'email',
+        recipient: adminEmail,
+        subject: 'New Fleet Management Booking - Novo Cars',
+        error,
+      });
     }
 
     // ── Company SMS alert (sender: Novo) ───────────────────────────────────────
@@ -116,10 +125,13 @@ export class FleetManagementService {
       );
     } catch (error) {
       // SMS failure must never block the booking response
-      this.logger.error(
-        'Failed to send fleet management SMS alert to company',
-        error instanceof Error ? error.stack : String(error),
-      );
+      await logAdminNotificationFailure(this.auditService, this.logger, {
+        context: 'fleet-management',
+        channel: 'sms',
+        recipient: this.companyPhone,
+        subject: 'New fleet management request alert',
+        error,
+      });
     }
 
     return {

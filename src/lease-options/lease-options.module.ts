@@ -8,10 +8,12 @@ import {
   LeaseConsultation,
   LeaseConsultationSchema,
 } from './schema/lease-consultation.schema';
+import { AuditModule } from '../audit/audit.module';
 
 @Module({
   imports: [
     NotificationsModule,
+    AuditModule,
     MongooseModule.forFeature([
       { name: LeaseConsultation.name, schema: LeaseConsultationSchema },
     ]),

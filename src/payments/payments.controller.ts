@@ -77,7 +77,15 @@ export class PaymentsController {
         error instanceof Error ? error.message : 'Unknown webhook error';
 
       this.logger.error({ message: message });
-      return { received: true }; // ALWAYS 200
+
+      // Every "safe to ignore" case (bad signature, malformed metadata,
+      // unrecognized source, missing rawBody) is already handled inside
+      // handlePaystackWebhook via an early `return` — it never throws for
+      // those. So if we get here, something genuinely failed (DB down,
+      // transaction aborted, etc.), and Paystack retrying is the correct
+      // recovery path. Swallowing this to a 200 (as before) told Paystack
+      // "all good" while the booking silently stayed unpaid.
+      throw error;
     }
   }
 

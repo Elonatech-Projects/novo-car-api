@@ -3,6 +3,7 @@
 import { BadRequestException, Injectable, Logger } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
+import { ConfigService } from '@nestjs/config';
 
 import {
   LeaseConsultation,
@@ -12,6 +13,8 @@ import {
 import { CreateLeaseConsultationDto } from './dto/create-lease-option.dto';
 import { NotificationService } from '../notifications/notifications.service';
 import { MailService } from '../mail/mail.service';
+import { AuditService } from '../audit/audit.service';
+import { logAdminNotificationFailure } from '../common/utils/admin-notification-failure';
 
 @Injectable()
 export class LeaseOptionsService {
@@ -22,6 +25,8 @@ export class LeaseOptionsService {
     private leaseModel: Model<LeaseConsultationDocument>,
     private readonly notificationService: NotificationService,
     private readonly mailService: MailService,
+    private readonly auditService: AuditService,
+    private readonly configService: ConfigService,
   ) {}
 
   async handleConsultation(dto: CreateLeaseConsultationDto) {
@@ -59,19 +64,29 @@ export class LeaseOptionsService {
     }
 
     /* ---------- ADMIN EMAIL ----------- */
-    const adminEmail = process.env.ADMIN_EMAIL || '';
+    const adminEmail = this.configService.get<string>('ADMIN_EMAIL');
 
-    try {
-      await this.mailService.sendTemplateEmail(
-        adminEmail,
-        'New Leasing Consultation Request - Novo Cars',
-        'leasing-consultation-admin',
-        { ...dto },
-      );
+    if (!adminEmail) {
+      this.logger.warn('ADMIN_EMAIL not configured — skipping admin email.');
+    } else {
+      try {
+        await this.mailService.sendTemplateEmail(
+          adminEmail,
+          'New Leasing Consultation Request - Novo Cars',
+          'leasing-consultation-admin',
+          { ...dto },
+        );
 
-      this.logger.log('Leasing admin email sent');
-    } catch (error) {
-      this.logger.error('Failed to send leasing admin email', error);
+        this.logger.log('Leasing admin email sent');
+      } catch (error) {
+        await logAdminNotificationFailure(this.auditService, this.logger, {
+          context: 'lease-options',
+          channel: 'email',
+          recipient: adminEmail,
+          subject: 'New Leasing Consultation Request - Novo Cars',
+          error,
+        });
+      }
     }
 
     return {

@@ -35,6 +35,33 @@ export class BookingRequestService {
   }
 
   async create(dto: CreateBookingRequestDto): Promise<void> {
+    // Guard against duplicate submissions: the frontend's fetch has no
+    // retry of its own, but a slow/cold-start backend response combined
+    // with a flaky mobile connection can still cause the same request to
+    // be sent twice. Treat a matching request submitted in the last 5
+    // minutes as the same request rather than creating a second booking
+    // and re-sending duplicate admin/user emails + SMS.
+    const DUPLICATE_WINDOW_MS = 5 * 60 * 1000;
+
+    const existing = await this.bookingModel
+      .findOne({
+        email: dto.email,
+        phoneNumber: dto.phoneNumber,
+        shuttleType: dto.shuttleType,
+        bookingDate: dto.bookingDate,
+        pickupTime: dto.pickupTime,
+        createdAt: { $gte: new Date(Date.now() - DUPLICATE_WINDOW_MS) },
+      })
+      .lean()
+      .exec();
+
+    if (existing) {
+      this.logger.log(
+        `Duplicate booking request suppressed for ${dto.email} (${dto.shuttleType}, ${dto.bookingDate} ${dto.pickupTime})`,
+      );
+      return;
+    }
+
     const requestDoc = await this.bookingModel.create({
       ...dto,
       status: 'pending_review',

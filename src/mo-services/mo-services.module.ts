@@ -4,9 +4,11 @@ import { MoServicesService } from './mo-services.service';
 import { MoServicesController } from './mo-services.controller';
 import { ManPower, ManPowerSchema } from './schema/mo-services-schema';
 import { MailService } from '../mail/mail.service';
+import { AuditModule } from '../audit/audit.module';
 
 @Module({
   imports: [
+    AuditModule,
     MongooseModule.forFeature([
       { name: ManPower.name, schema: ManPowerSchema },
     ]),

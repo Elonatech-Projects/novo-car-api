@@ -8,6 +8,7 @@ import {
   IsOptional,
   IsString,
   Min,
+  MinLength,
 } from 'class-validator';
 
 export enum ShuttleTypeEnum {
@@ -25,10 +26,12 @@ export class CreateBookingRequestDto {
 
   @IsString()
   @IsNotEmpty()
+  @MinLength(3)
   pickupLocation!: string;
 
   @IsString()
   @IsNotEmpty()
+  @MinLength(3)
   dropoffLocation!: string;
 
   @IsString()
@@ -54,10 +57,12 @@ export class CreateBookingRequestDto {
   // User Info
   @IsString()
   @IsNotEmpty()
+  @MinLength(2)
   firstName!: string;
 
   @IsString()
   @IsNotEmpty()
+  @MinLength(2)
   lastName!: string;
 
   @IsEmail()
@@ -65,6 +70,7 @@ export class CreateBookingRequestDto {
 
   @IsString()
   @IsNotEmpty()
+  @MinLength(7)
   phoneNumber!: string;
 
   // Airport
@@ -83,6 +89,7 @@ export class CreateBookingRequestDto {
   // Wedding
   @IsOptional()
   @IsString()
+  @MinLength(3)
   weddingVenue?: string;
 
   @IsOptional()

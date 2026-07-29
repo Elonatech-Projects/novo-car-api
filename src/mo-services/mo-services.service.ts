@@ -11,6 +11,8 @@ import { CreateMoServicesDto } from './dto/mo-services.dto';
 import { MongoError } from 'mongodb';
 import { MailService } from '../mail/mail.service';
 import { ConfigService } from '@nestjs/config';
+import { AuditService } from '../audit/audit.service';
+import { logAdminNotificationFailure } from '../common/utils/admin-notification-failure';
 
 @Injectable()
 export class MoServicesService {
@@ -19,6 +21,7 @@ export class MoServicesService {
     @InjectModel(ManPower.name) private readonly manPowerModel: Model<ManPower>,
     private readonly configService: ConfigService,
     private readonly mailService: MailService,
+    private readonly auditService: AuditService,
   ) {}
 
   async createManOutsourcing(dto: CreateMoServicesDto): Promise<ManPower> {
@@ -45,19 +48,29 @@ export class MoServicesService {
       });
 
       const savedManPower = await newManPower.save();
-      const adminEmail = this.configService.get<string>('ADMIN_EMAIL') || '';
+      const adminEmail = this.configService.get<string>('ADMIN_EMAIL');
 
       // Email notification to admin about new manpower request
-      try {
-        await this.mailService.sendTemplateEmail(
-          adminEmail,
-          'New Manpower Request',
-          'mo-services-admin',
-          { ...dto },
-        );
-        this.logger.log(`Notification email sent to admin: ${adminEmail}`);
-      } catch (error) {
-        this.logger.error('Failed to send notification email:', error);
+      if (!adminEmail) {
+        this.logger.warn('ADMIN_EMAIL not configured — skipping admin email.');
+      } else {
+        try {
+          await this.mailService.sendTemplateEmail(
+            adminEmail,
+            'New Manpower Request',
+            'mo-services-admin',
+            { ...dto },
+          );
+          this.logger.log(`Notification email sent to admin: ${adminEmail}`);
+        } catch (error) {
+          await logAdminNotificationFailure(this.auditService, this.logger, {
+            context: 'mo-services',
+            channel: 'email',
+            recipient: adminEmail,
+            subject: 'New Manpower Request',
+            error,
+          });
+        }
       }
 
       return savedManPower;
