@@ -32,7 +32,7 @@ export class UserBooking {
   price!: number;
 
   @Prop({
-    // type: String,
+    type: String,
     enum: BookingStatus,
     default: BookingStatus.PENDING_PAYMENT,
   })

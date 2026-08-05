@@ -12,7 +12,10 @@ import { Schedule, ScheduleDocument } from './schema/schedule.schema';
 import { SearchScheduleDto } from './dto/search-schedule.dto';
 import { getWeekDay } from '../common/utils/get-weekday.util';
 import { City, CityDocument } from '../city/schema/city.schema';
-import { UpdateSchedulePayload } from './types/UpdateSchedulePayload';
+import {
+  SchedulePlanInput,
+  UpdateSchedulePayload,
+} from './types/UpdateSchedulePayload';
 import {
   Shuttle,
   ShuttleDocument,
@@ -189,6 +192,8 @@ export class ScheduleService {
 
     const code = `${from}-${to}-${Date.now().toString(36)}`;
 
+    this.assertSinglePlanMatchesBasePrice(basePrice, plans);
+
     const schedule = await this.scheduleModel.create({
       code,
       name,
@@ -270,6 +275,26 @@ export class ScheduleService {
       }
     }
 
+    // ✅ Keep basePrice and the "single" plan's price in sync ────────────────
+    //
+    // This is a partial update — only re-validate when either basePrice or
+    // plans is actually being touched, and compare against the *resulting*
+    // state (new value where provided, existing value otherwise). Two calls
+    // that each patch only one side of the pair (e.g. one PATCH changes
+    // basePrice, a later one changes plans) would otherwise sail through
+    // individually and leave the two silently out of sync.
+    if (payload.basePrice !== undefined || payload.plans !== undefined) {
+      const existing = await this.scheduleModel.findById(id).lean();
+      if (!existing) {
+        throw new BadRequestException('Schedule not found');
+      }
+
+      const effectiveBasePrice = payload.basePrice ?? existing.basePrice;
+      const effectivePlans = payload.plans ?? existing.plans;
+
+      this.assertSinglePlanMatchesBasePrice(effectiveBasePrice, effectivePlans);
+    }
+
     // ✅ Update safely
     const updated = await this.scheduleModel
       .findByIdAndUpdate(id, payload, {
@@ -283,6 +308,29 @@ export class ScheduleService {
     }
 
     return updated;
+  }
+
+  // ── Guard: basePrice and the "single" plan's price must never diverge ──────
+  //
+  // basePrice is the per-trip fare charged when a booking doesn't select a
+  // plan (see shuttle-services.service.ts). The "single" plan is meant to be
+  // the exact same fare, just exposed as an explicit bundle option — the two
+  // are supposed to be one price shown two ways, not two independently
+  // editable numbers. Left unguarded, editing one in the admin panel without
+  // the other silently produces a route where booking with vs. without
+  // planKey=single charges two different amounts for an identical trip.
+  private assertSinglePlanMatchesBasePrice(
+    basePrice: number,
+    plans: SchedulePlanInput[] | undefined,
+  ): void {
+    const singlePlan = plans?.find((plan) => plan.key === 'single');
+
+    if (singlePlan && singlePlan.price !== basePrice) {
+      throw new BadRequestException(
+        `The "single" plan's price (${singlePlan.price}) must match basePrice (${basePrice}). ` +
+          'They represent the same per-trip fare — update both together.',
+      );
+    }
   }
 
   // Admin-only endpoint to toggle schedule active status (soft delete).
@@ -300,7 +348,40 @@ export class ScheduleService {
   }
 
   // Admin-only endpoint to permanently delete a schedule (hard delete).
+  //
+  // Guard: refuses to delete a schedule that still has bookings referencing
+  // it (as either the outbound or return leg) in a non-terminal state
+  // (RESERVED, PAID, REFUND_PENDING). Deleting it anyway would orphan those
+  // bookings — Mongoose's populate('schedule.outbound'/'return') returns
+  // null for a dangling reference, which breaks any UI that reads route
+  // details off a booking (see MyPlanClient in nshuttle). EXPIRED, REFUNDED,
+  // and CANCELLED bookings don't block deletion since nothing live depends
+  // on the route info anymore.
   async deleteSchedule(id: string) {
+    if (!Types.ObjectId.isValid(id)) {
+      throw new BadRequestException('Invalid schedule ID');
+    }
+
+    const scheduleId = new Types.ObjectId(id);
+
+    const activeBookingCount = await this.shuttleModel.countDocuments({
+      $or: [{ 'schedule.outbound': scheduleId }, { 'schedule.return': scheduleId }],
+      status: {
+        $in: [
+          ShuttleBookingStatus.RESERVED,
+          ShuttleBookingStatus.PAID,
+          ShuttleBookingStatus.REFUND_PENDING,
+        ],
+      },
+    });
+
+    if (activeBookingCount > 0) {
+      throw new BadRequestException(
+        `Cannot delete this schedule — ${activeBookingCount} active booking${activeBookingCount !== 1 ? 's' : ''} still reference it. ` +
+          'Deactivate the schedule instead (toggle it off), or wait for those bookings to reach a terminal state.',
+      );
+    }
+
     const deleted = await this.scheduleModel.findByIdAndDelete(id);
 
     if (!deleted) {

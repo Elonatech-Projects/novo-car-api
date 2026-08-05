@@ -231,6 +231,7 @@ export class PaymentsService {
         reference,
         email: user.email,
         amount: booking.totalAmount * 100,
+        authorizationUrl: response.data.authorization_url,
       },
     };
   }
